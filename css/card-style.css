@@ -1,0 +1,280 @@
+/* ============================================
+   Student ID Card - 6.5cm x 8.5cm (portrait)
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Main Card Container */
+.student-id-card {
+    position: relative;
+    width: 246px;   /* 6.5cm ≈ 246px at 96dpi */
+    height: 321px;  /* 8.5cm ≈ 321px at 96dpi */
+    background: #f5f5f0;
+    border: 1px solid #4A86E8;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'Khmer', 'Khmer OS Moul Light', 'Moul', sans-serif;
+    box-sizing: border-box;
+    overflow: visible;  /* ← IMPORTANT: allows stamp to show outside */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Watermark Background */
+.watermark-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 160px;
+    height: 160px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Header Section */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+}
+
+.logo-area img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+}
+
+.royal-text {
+    text-align: right;
+}
+
+.royal-line-1 {
+    font-size: 8px;
+    font-weight: normal;
+    color: #233D2E;
+}
+
+.royal-line-2 {
+    font-size: 8px;
+    font-weight: normal;
+    color: #233D2E;
+}
+
+/* Ministry & School Section */
+.ministry-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.ministry-text {
+    flex: 1;
+}
+
+.ministry-text div {
+    font-size: 7px;
+    color: #233D2E;
+    line-height: 1.3;
+}
+
+.school-name-card {
+    font-size: 8px;
+    font-weight: bold;
+    color: #233D2E;
+    margin-top: 2px;
+}
+
+.qr-area svg {
+    width: 45px;
+    height: 45px;
+}
+
+/* Title Section */
+.title-section-card {
+    text-align: center;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.card-title-text {
+    font-size: 11px;
+    font-weight: bold;
+    color: #D28A17;
+    letter-spacing: 1px;
+}
+
+.academic-year-card {
+    font-size: 8px;
+    color: #3D8BFF;
+    margin-top: 2px;
+}
+
+/* Information Grid */
+.info-grid {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 8px;
+}
+
+.info-row-grid {
+    display: grid;
+    grid-template-columns: 55px 1fr 40px 1fr;
+    gap: 4px;
+    margin-bottom: 5px;
+    font-size: 6.5px;
+    line-height: 1.3;
+}
+
+.info-label-grid {
+    color: #233D2E;
+    font-weight: 500;
+}
+
+.info-value-grid {
+    color: #304FFE;
+    font-weight: bold;
+}
+
+/* Bottom Section */
+.bottom-section-card {
+    display: flex;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+    margin-top: 5px;
+}
+
+/* Photo Section */
+.photo-section {
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* ========== CRITICAL FIX FOR STAMP OVERLAP 1cm ========== */
+.photo-frame-card {
+    width: 75px;
+    height: 95px;
+    border: 1px solid #4A86E8;
+    border-radius: 3px;
+    background: white;
+    position: relative;
+    overflow: visible !important;  /* ← KEY: allows stamp to overlap */
+}
+
+/* Container for photo + stamp - MUST have overflow visible */
+.photo-frame-card > div {
+    overflow: visible !important;  /* ← KEY: inner container also visible */
+}
+
+/* Make sure the relative container for stamp works */
+.photo-frame-card [style*="position: relative"] {
+    overflow: visible !important;
+}
+
+.photo-placeholder-content {
+    width: 100%;
+    height: 100%;
+    background: #e5e7eb;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: visible !important;
+}
+
+.student-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Info Section Card */
+.info-section-card {
+    flex: 1;
+}
+
+.date-text {
+    font-size: 6px;
+    color: #233D2E;
+    line-height: 1.3;
+    margin-bottom: 3px;
+}
+
+.school-detail-text {
+    font-size: 6px;
+    color: #233D2E;
+    margin-bottom: 5px;
+}
+
+.principal-section {
+    text-align: right;
+}
+
+.principal-title {
+    font-size: 7px;
+    font-weight: bold;
+    color: #233D2E;
+    margin-bottom: 2px;
+}
+
+.signature-image img {
+    width: 100px;
+    height: auto;
+    max-height: 40px;
+    object-fit: contain;
+    margin-left: 38px;
+}
+
+/* Print Styles */
+@media print {
+    .student-id-card {
+        box-shadow: none;
+        margin: 0;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        overflow: visible;
+    }
+    
+    .watermark-bg {
+        opacity: 0.12;
+    }
+    
+    .photo-frame-card {
+        overflow: visible !important;
+    }
+    
+    .photo-frame-card div,
+    .photo-frame-card [style*="position: absolute"] {
+        overflow: visible !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}
+
+/* Emergency fix - force all containers to allow overflow */
+.photo-section,
+.photo-section * {
+    overflow: visible !important;
+}
+
+/* Make stamp container properly positioned */
+.photo-frame-card > div {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រព័ន្ធកាតសិស្ស</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
+        }
+        .card-menu {
+            transition: all 0.3s ease;
+            display: block;
+        }
+        .card-menu:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header with Logout -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-end mb-4">
+            <div id="userInfo" class="flex items-center space-x-3 bg-white px-4 py-2 rounded-lg shadow-sm">
+                <span class="text-sm text-gray-600">👤 <span id="username">កំពុងផ្ទុក...</span></span>
+                <button id="logoutBtn" class="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition text-sm">
+                    🚪 ចាកចេញ
+                </button>
+            </div>
+        </div>
+        
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🏫 ប្រព័ន្ធគ្រប់គ្រងកាតសិស្ស</h1>
+        
+        <!-- Menu Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <!-- Card 1: Create Card -->
+            <a href="pages/create.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-center">
+                        <div class="text-6xl mb-3">🪪</div>
+                        <h2 class="text-xl font-bold text-white">បង្កើតកាតសិស្ស</h2>
+                        <p class="text-blue-100 text-sm mt-2">Create Student Card</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        បញ្ចូលព័ត៌មានសិស្ស និងបង្កើតកាតម្នាក់ៗ
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 2: Search List for Add -->
+            <a href="pages/search.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 p-6 text-center">
+                        <div class="text-6xl mb-3">🔍</div>
+                        <h2 class="text-xl font-bold text-white">ស្វែងរកសិស្ស</h2>
+                        <p class="text-green-100 text-sm mt-2">Search & Add Students</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        ស្វែងរកតាមថ្នាក់ និងជ្រើសរើសសិស្សបន្ថែម
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 3: Generate Card -->
+            <a href="pages/generate.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+                        <div class="text-6xl mb-3">📇</div>
+                        <h2 class="text-xl font-bold text-white">បង្កើតកាតច្រើន</h2>
+                        <p class="text-purple-100 text-sm mt-2">Batch Generate Cards</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        បង្កើតកាតសិស្សច្រើននាក់ក្នុងពេលតែម្តង
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 4: Card Editor -->
+            <a href="pages/editor.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-6 text-center">
+                        <div class="text-6xl mb-3">🎨</div>
+                        <h2 class="text-xl font-bold text-white">កែសម្រួលកាត</h2>
+                        <p class="text-pink-100 text-sm mt-2">Card Editor</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        កែប្រែទំហំ ពុម្ពអក្សរ ពណ៌ និងរូបភាព
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 5: Update Class -->
+            <a href="pages/update-class.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-center">
+                        <div class="text-6xl mb-3">🔄</div>
+                        <h2 class="text-xl font-bold text-white">ផ្លាស់ប្តូរថ្នាក់</h2>
+                        <p class="text-orange-100 text-sm mt-2">Update Class</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        ផ្លាស់ប្តូរថ្នាក់សិស្សតាមក្រុម ឬតាមបុគ្គល
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 6: Digital Card -->
+            <a href="pages/digital-card.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-teal-500 to-cyan-600 p-6 text-center">
+                        <div class="text-6xl mb-3">📱</div>
+                        <h2 class="text-xl font-bold text-white">កាតឌីជីថល</h2>
+                        <p class="text-teal-100 text-sm mt-2">Digital ID Card</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        មើលកាតសិស្សតាមរយៈទូរស័ព្ទ ចែករំលែក និងទាញយក
+                    </div>
+                </div>
+            </a>
+            <!-- Card 7: Attendance (ស្រង់វត្តមាន) -->
+            <a href="pages/attendance.html" class="card-menu">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-indigo-500 to-violet-600 p-6 text-center">
+                        <div class="text-6xl mb-3">📋</div>
+                        <h2 class="text-xl font-bold text-white">ស្រង់វត្តមាន</h2>
+                        <p class="text-indigo-100 text-sm mt-2">Attendance</p>
+                    </div>
+                    <div class="p-4 text-gray-600 text-center text-sm">
+                        កត់ត្រាវត្តមានសិស្សតាមថ្នាក់ និងគ្រប់គ្រងស្វ័យប្រវត្តិ
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-12 text-gray-500 text-sm">
+            <p>© 2024 ប្រព័ន្ធបោះពុម្ពកាតសិស្ស | Student ID Card Generator</p>
+            <p class="text-xs mt-1 text-gray-400">ព្រះរាជាណាចក្រកម្ពុជា ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+        </div>
+    </div>
+    
+    <!-- Auth Scripts -->
+    <script src="js/auth.js"></script>
+    <script>
+        // Check authentication
+        (function() {
+            // Check if user is logged in
+            if (typeof isLoggedIn !== 'undefined' && !isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Display username
+            if (typeof getCurrentUser !== 'undefined') {
+                const user = getCurrentUser();
+                const usernameSpan = document.getElementById('username');
+                if (user && usernameSpan) {
+                    usernameSpan.innerText = user.username;
+                } else if (usernameSpan) {
+                    usernameSpan.innerText = 'Guest';
+                }
+            }
+            
+            // Setup logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.onclick = function() {
+                    if (typeof logout !== 'undefined') {
+                        logout();
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                };
+            }
+        })();
+    </script>
+</body>
+</html>

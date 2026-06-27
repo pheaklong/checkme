@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ផ្លាស់ប្តូរថ្នាក់សិស្ស - Update Class</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
+        .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; color: white; font-size: 18px; }
+        .loading.active { display: flex; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; z-index: 10000; animation: slideIn 0.3s ease; }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #dc2626; }
+        .toast.info { background: #3b82f6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+   <script src="../js/auth.js"></script>
+<script>
+    // Protect page
+    if (typeof window.protectPage !== 'undefined') {
+        window.protectPage();
+    }
+    
+    // Display username if element exists
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (user && document.getElementById('username')) {
+        document.getElementById('username').innerText = user.username;
+    }
+</script>
+</head>
+<body class="bg-gray-100">
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading">
+        <div class="text-center">
+            <svg class="animate-spin h-10 w-10 text-white mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p>កំពុងដំណើរការ...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-4">
+            <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-center mb-8 text-orange-600">🔄 ផ្លាស់ប្តូរថ្នាក់សិស្ស</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Panel 1: Update by Class -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-4 text-orange-700 border-b pb-2">📚 ផ្លាស់ប្តូរតាមថ្នាក់ទាំងមូល</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ថ្នាក់ដើម (ចាស់)</label>
+                        <select id="oldClassSelect" class="w-full border rounded-lg p-2.5 bg-white">
+                            <option value="">-- ជ្រើសរើសថ្នាក់ --</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1" id="oldClassCount">ចំនួនសិស្ស: 0 នាក់</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ថ្នាក់ថ្មី</label>
+                        <input type="text" id="newClassName" placeholder="ឧទាហរណ៍: ថ្នាក់ទី១២B" class="w-full border rounded-lg p-2.5">
+                    </div>
+                    
+                    <button id="updateByClassBtn" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition font-medium">
+                        🔄 ផ្លាស់ប្តូរថ្នាក់ទាំងមូល
+                    </button>
+                    
+                    <div class="bg-yellow-50 p-3 rounded-lg mt-3">
+                        <p class="text-sm text-yellow-800">
+                            <span class="font-bold">⚠️ ការព្រមាន៖</span> ការផ្លាស់ប្តូរនេះនឹងកែប្រែថ្នាក់របស់សិស្សទាំងអស់ក្នុងថ្នាក់ដែលបានជ្រើស។
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel 2: Update Individual Student -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-4 text-green-700 border-b pb-2">👤 ផ្លាស់ប្តូរតាមបុគ្គល</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ស្វែងរកសិស្ស</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="searchStudent" placeholder="បញ្ចូល Student ID ឬឈ្មោះ..." class="flex-1 border rounded-lg p-2.5">
+                            <button id="searchStudentBtn" class="bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700">🔍 ស្វែងរក</button>
+                        </div>
+                    </div>
+                    
+                    <div id="studentResult" class="hidden">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center space-x-3">
+                                <div id="studentPhoto" class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden"></div>
+                                <div class="flex-1">
+                                    <p class="font-semibold" id="studentName">-</p>
+                                    <p class="text-sm text-gray-500" id="studentInfo">ID: - | ថ្នាក់: -</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ថ្នាក់ថ្មី</label>
+                            <input type="text" id="newStudentClass" placeholder="បញ្ចូលថ្នាក់ថ្មី..." class="w-full border rounded-lg p-2.5">
+                        </div>
+                        
+                        <button id="updateStudentBtn" class="w-full bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 transition font-medium mt-3">
+                            🔄 ផ្លាស់ប្តូរថ្នាក់បុគ្គល
+                        </button>
+                    </div>
+                    
+                    <div id="noStudentResult" class="hidden text-center py-4 text-gray-500">
+                        <p>❌ រកមិនឃើញសិស្សទេ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Updates Log -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-700 border-b pb-2">📋 កំណត់ត្រានៃការផ្លាស់ប្តូរថ្នាក់</h2>
+            <div id="updateLog" class="space-y-2 max-h-80 overflow-y-auto">
+                <div class="text-center py-8 text-gray-500">មិនទាន់មានកំណត់ត្រា</div>
+            </div>
+            <button id="clearLogBtn" class="mt-3 text-sm text-red-600 hover:text-red-800">🗑️ សម្អាតកំណត់ត្រា</button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const TABLE_NAME = 'table_student';
+        
+        // Global variables
+        let allClassNamesList = [];
+        let currentSelectedStudent = null;
+        
+        // Load update log from localStorage
+        let updateLog = JSON.parse(localStorage.getItem('classUpdateLog') || '[]');
+        
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function addToLog(action, details) {
+            const logEntry = {
+                timestamp: new Date().toLocaleString('km-KH'),
+                action: action,
+                details: details
+            };
+            updateLog.unshift(logEntry);
+            if (updateLog.length > 50) updateLog.pop();
+            localStorage.setItem('classUpdateLog', JSON.stringify(updateLog));
+            displayUpdateLog();
+        }
+        
+        function displayUpdateLog() {
+            const container = document.getElementById('updateLog');
+            if (updateLog.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500">មិនទាន់មានកំណត់ត្រា</div>';
+                return;
+            }
+            
+            container.innerHTML = updateLog.map(log => `
+                <div class="bg-gray-50 rounded-lg p-3 border-l-4 ${log.action === 'បានផ្លាស់ប្តូរថ្នាក់តាមក្រុម' ? 'border-orange-500' : 'border-green-500'}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="font-medium text-sm">${log.action}</p>
+                            <p class="text-xs text-gray-600 mt-1">${log.details}</p>
+                        </div>
+                        <span class="text-xs text-gray-400">${log.timestamp}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ============================================
+        // LOAD CLASS NAMES
+        // ============================================
+        async function loadClassNames() {
+            try {
+                const { count, error: countError } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*', { count: 'exact', head: true })
+                    .not('class', 'is', null);
+                
+                if (countError) throw countError;
+                
+                const totalStudents = count;
+                const batchSize = 1000;
+                const allClassNamesSet = new Set();
+                
+                for (let i = 0; i < totalStudents; i += batchSize) {
+                    const { data, error } = await supabaseClient
+                        .from(TABLE_NAME)
+                        .select('class')
+                        .not('class', 'is', null)
+                        .range(i, i + batchSize - 1);
+                    
+                    if (error) throw error;
+                    
+                    if (data && data.length > 0) {
+                        data.forEach(item => {
+                            if (item.class && item.class.trim() !== '') {
+                                allClassNamesSet.add(item.class);
+                            }
+                        });
+                    }
+                }
+                
+                allClassNamesList = Array.from(allClassNamesSet).sort();
+                
+                const select = document.getElementById('oldClassSelect');
+                select.innerHTML = '<option value="">-- ជ្រើសរើសថ្នាក់ --</option>';
+                allClassNamesList.forEach(className => {
+                    select.innerHTML += `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`;
+                });
+                
+            } catch (error) {
+                console.error('Error loading class names:', error);
+                showToast('កំហុសក្នុងការផ្ទុកបញ្ជីថ្នាក់', 'error');
+            }
+        }
+        
+        // Update class count when selected
+        document.getElementById('oldClassSelect')?.addEventListener('change', async (e) => {
+            const selectedClass = e.target.value;
+            if (!selectedClass) {
+                document.getElementById('oldClassCount').innerHTML = 'ចំនួនសិស្ស: 0 នាក់';
+                return;
+            }
+            
+            const { count, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .select('*', { count: 'exact', head: true })
+                .eq('class', selectedClass);
+            
+            if (!error) {
+                document.getElementById('oldClassCount').innerHTML = `ចំនួនសិស្ស: ${count} នាក់`;
+            }
+        });
+        
+        // ============================================
+        // UPDATE BY CLASS
+        // ============================================
+        document.getElementById('updateByClassBtn')?.addEventListener('click', async () => {
+            const oldClass = document.getElementById('oldClassSelect').value;
+            const newClass = document.getElementById('newClassName').value.trim();
+            
+            if (!oldClass) {
+                showToast('សូមជ្រើសរើសថ្នាក់ដើម', 'error');
+                return;
+            }
+            if (!newClass) {
+                showToast('សូមបញ្ចូលថ្នាក់ថ្មី', 'error');
+                return;
+            }
+            if (oldClass === newClass) {
+                showToast('ថ្នាក់ដើម និងថ្នាក់ថ្មីដូចគ្នា', 'error');
+                return;
+            }
+            
+            const confirmed = confirm(`តើអ្នកពិតជាចង់ផ្លាស់ប្តូរសិស្សទាំងអស់ក្នុងថ្នាក់ "${oldClass}" ទៅថ្នាក់ "${newClass}" មែនទេ?`);
+            if (!confirmed) return;
+            
+            showLoading();
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .update({ class: newClass })
+                    .eq('class', oldClass);
+                
+                if (error) throw error;
+                
+                const { count } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*', { count: 'exact', head: true })
+                    .eq('class', newClass);
+                
+                showToast(`✅ បានផ្លាស់ប្តូរសិស្ស ${count} នាក់ពីថ្នាក់ "${oldClass}" ទៅ "${newClass}" ដោយជោគជ័យ!`, 'success');
+                addToLog('បានផ្លាស់ប្តូរថ្នាក់តាមក្រុម', `ថ្នាក់ "${oldClass}" → "${newClass}" (${count} នាក់)`);
+                
+                // Reset form
+                document.getElementById('oldClassSelect').value = '';
+                document.getElementById('newClassName').value = '';
+                document.getElementById('oldClassCount').innerHTML = 'ចំនួនសិស្ស: 0 នាក់';
+                
+                // Reload class list
+                await loadClassNames();
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                showToast('❌ កំហុស: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // ============================================
+        // SEARCH STUDENT
+        // ============================================
+        document.getElementById('searchStudentBtn')?.addEventListener('click', async () => {
+            const searchTerm = document.getElementById('searchStudent').value.trim();
+            if (!searchTerm) {
+                showToast('សូមបញ្ចូល Student ID ឬឈ្មោះ', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .or(`studentID.ilike.%${searchTerm}%,name.ilike.%${searchTerm}%`)
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    document.getElementById('studentResult').classList.add('hidden');
+                    document.getElementById('noStudentResult').classList.remove('hidden');
+                    currentSelectedStudent = null;
+                } else {
+                    currentSelectedStudent = data[0];
+                    document.getElementById('noStudentResult').classList.add('hidden');
+                    document.getElementById('studentResult').classList.remove('hidden');
+                    document.getElementById('studentName').innerText = currentSelectedStudent.name;
+                    document.getElementById('studentInfo').innerHTML = `ID: ${currentSelectedStudent.studentID} | ថ្នាក់: ${currentSelectedStudent.class || 'N/A'}`;
+                    document.getElementById('newStudentClass').value = currentSelectedStudent.class || '';
+                    
+                    // Load photo if exists
+                    const photoContainer = document.getElementById('studentPhoto');
+                    if (currentSelectedStudent.photo) {
+                        photoContainer.innerHTML = `<img src="${currentSelectedStudent.photo}" class="w-full h-full object-cover">`;
+                    } else {
+                        photoContainer.innerHTML = `<svg class="w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showToast('❌ កំហុស: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // ============================================
+        // UPDATE INDIVIDUAL STUDENT
+        // ============================================
+        document.getElementById('updateStudentBtn')?.addEventListener('click', async () => {
+            if (!currentSelectedStudent) {
+                showToast('សូមស្វែងរកសិស្សជាមុន', 'error');
+                return;
+            }
+            
+            const newClass = document.getElementById('newStudentClass').value.trim();
+            if (!newClass) {
+                showToast('សូមបញ្ចូលថ្នាក់ថ្មី', 'error');
+                return;
+            }
+            
+            const oldClass = currentSelectedStudent.class || 'N/A';
+            if (oldClass === newClass) {
+                showToast('ថ្នាក់ដើម និងថ្នាក់ថ្មីដូចគ្នា', 'error');
+                return;
+            }
+            
+            const confirmed = confirm(`តើអ្នកពិតជាចង់ផ្លាស់ប្តូរថ្នាក់របស់សិស្ស ${currentSelectedStudent.name} (${currentSelectedStudent.studentID}) ពី "${oldClass}" ទៅ "${newClass}" មែនទេ?`);
+            if (!confirmed) return;
+            
+            showLoading();
+            
+            try {
+                const { error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .update({ class: newClass })
+                    .eq('studentID', currentSelectedStudent.studentID);
+                
+                if (error) throw error;
+                
+                showToast(`✅ បានផ្លាស់ប្តូរថ្នាក់របស់សិស្ស ${currentSelectedStudent.name} ទៅ "${newClass}" ដោយជោគជ័យ!`, 'success');
+                addToLog('បានផ្លាស់ប្តូរថ្នាក់បុគ្គល', `សិស្ស: ${currentSelectedStudent.name} (${currentSelectedStudent.studentID}) | "${oldClass}" → "${newClass}"`);
+                
+                // Update current student info
+                currentSelectedStudent.class = newClass;
+                document.getElementById('studentInfo').innerHTML = `ID: ${currentSelectedStudent.studentID} | ថ្នាក់: ${newClass}`;
+                document.getElementById('newStudentClass').value = newClass;
+                
+                // Reload class list for the dropdown
+                await loadClassNames();
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                showToast('❌ កំហុស: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // ============================================
+        // CLEAR LOG
+        // ============================================
+        document.getElementById('clearLogBtn')?.addEventListener('click', () => {
+            if (confirm('តើអ្នកចង់សម្អាតកំណត់ត្រាទាំងអស់មែនទេ?')) {
+                updateLog = [];
+                localStorage.setItem('classUpdateLog', JSON.stringify(updateLog));
+                displayUpdateLog();
+                showToast('បានសម្អាតកំណត់ត្រាដោយជោគជ័យ', 'success');
+            }
+        });
+        
+        // Enter key support
+        document.getElementById('searchStudent')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('searchStudentBtn').click();
+        });
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Initialize
+        loadClassNames();
+        displayUpdateLog();
+    </script>
+</body>
+</html>

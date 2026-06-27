@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - BUILCARD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
+        .sidebar {
+            background: #1a1a2e;
+            min-height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 20px 0;
+            color: white;
+            z-index: 100;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .brand { text-align: center; padding: 16px 0 20px; font-size: 22px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
+        .sidebar .brand span { color: #4f46e5; }
+        .sidebar .nav-item {
+            display: flex; align-items: center; padding: 12px 24px; color: #a0aec0;
+            text-decoration: none; transition: all 0.3s; cursor: pointer;
+            border-left: 3px solid transparent; font-size: 14px;
+        }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar .nav-item.active { background: rgba(79,70,229,0.15); color: white; border-left-color: #4f46e5; }
+        .sidebar .nav-item .icon { margin-right: 12px; font-size: 18px; width: 24px; text-align: center; }
+        .sidebar .nav-item.logout-btn { margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; color: #fc8181; }
+        .sidebar .nav-item.logout-btn:hover { color: #f56565; background: rgba(252,129,129,0.08); }
+        .main-content { margin-left: 250px; padding: 24px; min-height: 100vh; background: #f7fafc; }
+        .stats-card { background: white; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); transition: transform 0.2s; border: 1px solid #f0f0f0; }
+        .stats-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+        .stats-card .number { font-size: 30px; font-weight: bold; line-height: 1.2; }
+        .stats-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }
+        .stats-card .icon-bg { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .notification-item { transition: background 0.2s; border: 1px solid #f0f0f0; }
+        .notification-item:hover { background: #f8fafc; }
+        .menu-toggle { display: none; background: none; border: none; color: #4a5568; font-size: 24px; cursor: pointer; padding: 8px; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 16px; }
+            .menu-toggle { display: block; }
+            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+            .sidebar-overlay.active { display: block; }
+            .stats-card .number { font-size: 24px; }
+        }
+        .page-header { background: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .page-header h1 { font-size: 22px; font-weight: bold; color: #1a202c; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .badge { padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-admin { background: #fee2e2; color: #991b1b; }
+        .quick-action { transition: all 0.2s; border: 1px solid #f0f0f0; }
+        .quick-action:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+    </style>
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="brand">📚 BUIL<span>CARD</span></div>
+        <nav>
+            <a class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="icon">📊</span> ផ្ទាំងគ្រប់គ្រង</a>
+            <a class="nav-item" data-tab="users" onclick="switchTab('users')"><span class="icon">👥</span> គ្រប់គ្រងអ្នកប្រើប្រាស់</a>
+            <a class="nav-item" data-tab="notifications" onclick="switchTab('notifications')"><span class="icon">🔔</span> ការជូនដំណឹង</a>
+            <a class="nav-item" data-tab="settings" onclick="switchTab('settings')"><span class="icon">⚙️</span> ការកំណត់</a>
+            <a class="nav-item logout-btn" onclick="handleLogout()"><span class="icon">🚪</span> ចាកចេញ</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="flex items-center gap-3">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h1 id="pageTitle">📊 ផ្ទាំងគ្រប់គ្រង</h1>
+            </div>
+            <div class="user-info">
+                <span id="userDisplay" class="text-sm text-gray-600"></span>
+                <span id="roleBadge" class="badge badge-admin">Admin</span>
+            </div>
+        </div>
+
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <div class="stats-card flex items-center justify-between">
+                    <div><p class="label">អ្នកប្រើប្រាស់សរុប</p><p class="number text-indigo-600" id="totalUsers">0</p></div>
+                    <div class="icon-bg bg-indigo-50 text-indigo-600">👥</div>
+                </div>
+                <div class="stats-card flex items-center justify-between">
+                    <div><p class="label">គ្រូ</p><p class="number text-green-600" id="totalTeachers">0</p></div>
+                    <div class="icon-bg bg-green-50 text-green-600">👨‍🏫</div>
+                </div>
+                <div class="stats-card flex items-center justify-between">
+                    <div><p class="label">សិស្ស</p><p class="number text-blue-600" id="totalStudents">0</p></div>
+                    <div class="icon-bg bg-blue-50 text-blue-600">👨‍🎓</div>
+                </div>
+                <div class="stats-card flex items-center justify-between">
+                    <div><p class="label">ការជូនដំណឹង</p><p class="number text-yellow-600" id="totalNotifications">0</p></div>
+                    <div class="icon-bg bg-yellow-50 text-yellow-600">🔔</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4">⚡ សកម្មភាពរហ័ស</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button onclick="switchTab('users')" class="quick-action p-4 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition text-center">
+                        <div class="text-3xl mb-1">➕</div><p class="text-sm font-medium text-gray-700">បង្កើតអ្នកប្រើប្រាស់</p>
+                    </button>
+                    <button onclick="switchTab('notifications')" class="quick-action p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition text-center">
+                        <div class="text-3xl mb-1">🔔</div><p class="text-sm font-medium text-gray-700">ផ្ញើការជូនដំណឹង</p>
+                    </button>
+                    <a href="attendance.html" class="quick-action p-4 bg-green-50 rounded-xl hover:bg-green-100 transition text-center">
+                        <div class="text-3xl mb-1">📋</div><p class="text-sm font-medium text-gray-700">ស្រង់វត្តមាន</p>
+                    </a>
+                    <a href="../index.html" class="quick-action p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition text-center">
+                        <div class="text-3xl mb-1">🏠</div><p class="text-sm font-medium text-gray-700">ទំព័រដើម</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-users" class="tab-content"><div id="userManagementContainer"></div></div>
+
+        <div id="tab-notifications" class="tab-content">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4">🔔 ការជូនដំណឹង</h3>
+                <div class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <h4 class="font-medium text-gray-700 mb-3">📝 បង្កើតការជូនដំណឹងថ្មី</h4>
+                    <form id="notificationForm" onsubmit="handleCreateNotification(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div><input type="text" id="notifTitle" placeholder="ចំណងជើង" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" required></div>
+                            <div><select id="notifType" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                <option value="info">📘 ព័ត៌មាន</option><option value="success">✅ ជោគជ័យ</option>
+                                <option value="warning">⚠️ ការព្រមាន</option><option value="error">❌ កំហុស</option>
+                            </select></div>
+                        </div>
+                        <div class="mt-3"><textarea id="notifMessage" placeholder="សារជូនដំណឹង..." class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" rows="2" required></textarea></div>
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            <select id="notifAudience" class="border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                <option value="all">👥 ទាំងអស់គ្នា</option>
+                                <option value="teachers">👨‍🏫 គ្រូទាំងអស់</option>
+                                <option value="students">👨‍🎓 សិស្សទាំងអស់</option>
+                                <option value="admins">👑 Admin ទាំងអស់</option>
+                            </select>
+                            <button type="submit" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">📤 ផ្ញើការជូនដំណឹង</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="notificationList"><div class="text-center py-8 text-gray-500"><p>📭 កំពុងផ្ទុក...</p></div></div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4">⚙️ ការកំណត់ប្រព័ន្ធ</h3>
+                <div class="space-y-4 max-w-lg">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ឈ្មោះប្រព័ន្ធ</label><input type="text" value="BUILCARD" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ឆ្នាំសិក្សា</label><select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"><option>2024-2025</option><option selected>2025-2026</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ភាសា</label><select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"><option>ភាសាខ្មែរ</option><option>English</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ការតភ្ជាប់ Supabase</label>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <span id="supabaseStatus" class="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">កំពុងពិនិត្យ...</span>
+                            <button onclick="checkSupabaseConnection()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">ពិនិត្យម្តងទៀត</button>
+                        </div>
+                    </div>
+                    <button class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">💾 រក្សាទុកការកំណត់</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/user-management.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Admin dashboard loading...');
+
+            if (typeof userManagement === 'undefined') {
+                console.error('User management not loaded');
+                return;
+            }
+
+            if (!userManagement.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = userManagement.getCurrentUser();
+            if (user.role !== 'admin') {
+                alert('អ្នកមិនមានសិទ្ធិចូលមើលទំព័រនេះទេ');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('userDisplay').textContent = `👤 ${user.fullName}`;
+            document.getElementById('roleBadge').textContent = 'Admin';
+            document.getElementById('roleBadge').className = 'badge badge-admin';
+
+            await updateStats();
+            userManagement.renderUserManagement('userManagementContainer');
+            renderNotifications();
+            await checkSupabaseConnection();
+            console.log('Admin dashboard loaded');
+        });
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('sidebarOverlay').classList.remove('active');
+            }
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const tab = document.getElementById(`tab-${tabId}`);
+            if (tab) tab.classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.dataset.tab === tabId) el.classList.add('active');
+            });
+
+            const titles = { 'dashboard': '📊 ផ្ទាំងគ្រប់គ្រង', 'users': '👥 គ្រប់គ្រងអ្នកប្រើប្រាស់', 'notifications': '🔔 ការជូនដំណឹង', 'settings': '⚙️ ការកំណត់' };
+            document.getElementById('pageTitle').textContent = titles[tabId] || '📊 ផ្ទាំងគ្រប់គ្រង';
+
+            if (tabId === 'users') userManagement.renderUserManagement('userManagementContainer');
+            else if (tabId === 'notifications') renderNotifications();
+
+            if (window.innerWidth <= 768) toggleSidebar();
+        }
+
+        async function checkSupabaseConnection() {
+            const statusEl = document.getElementById('supabaseStatus');
+            if (!statusEl) return;
+            try {
+                if (typeof SupabaseConfig !== 'undefined') {
+                    const connected = await SupabaseConfig.checkConnection();
+                    if (connected) {
+                        statusEl.className = 'px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium';
+                        statusEl.textContent = '✅ តភ្ជាប់ដោយជោគជ័យ';
+                    } else {
+                        statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
+                        statusEl.textContent = '❌ មិនអាចតភ្ជាប់';
+                    }
+                } else {
+                    statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
+                    statusEl.textContent = '❌ Config.js មិនត្រូវបានផ្ទុក';
+                }
+            } catch (error) {
+                statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
+                statusEl.textContent = '❌ កំហុសក្នុងការតភ្ជាប់';
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const users = userManagement.getUsers();
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalTeachers').textContent = users.filter(u => u.role === 'teacher').length;
+                document.getElementById('totalStudents').textContent = users.filter(u => u.role === 'student').length;
+                const notifications = await userManagement.getNotifications();
+                document.getElementById('totalNotifications').textContent = notifications.length;
+            } catch (error) { console.error('Error updating stats:', error); }
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notificationList');
+            if (!container) return;
+            
+            userManagement.getNotifications().then(notifications => {
+                if (!notifications || notifications.length === 0) {
+                    container.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="text-5xl mb-3">📭</div><p>មិនមានការជូនដំណឹងទេ</p></div>`;
+                    return;
+                }
+                container.innerHTML = `<div class="space-y-2 max-h-96 overflow-y-auto pr-1">${notifications.map(n => `
+                    <div class="notification-item p-3 rounded-lg border-l-4 ${n.type === 'info' ? 'border-blue-400 bg-blue-50' : n.type === 'success' ? 'border-green-400 bg-green-50' : n.type === 'warning' ? 'border-yellow-400 bg-yellow-50' : 'border-red-400 bg-red-50'}">
+                        <div class="flex justify-between items-start"><h4 class="font-medium text-gray-800">${n.title}</h4><span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span></div>
+                        <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                    </div>`).join('')}</div>`;
+            });
+        }
+
+        function handleCreateNotification(event) {
+            event.preventDefault();
+            const title = document.getElementById('notifTitle').value.trim();
+            const message = document.getElementById('notifMessage').value.trim();
+            const type = document.getElementById('notifType').value;
+            const audience = document.getElementById('notifAudience').value;
+
+            if (!title || !message) { alert('សូមបញ្ចូលចំណងជើង និងសារជូនដំណឹង'); return; }
+
+            let userIds = null;
+            if (audience !== 'all') {
+                const users = userManagement.getUsers();
+                userIds = users.filter(u => {
+                    if (audience === 'teachers') return u.role === 'teacher';
+                    if (audience === 'students') return u.role === 'student';
+                    if (audience === 'admins') return u.role === 'admin';
+                    return true;
+                }).map(u => u.id);
+            }
+
+            const result = userManagement.createNotification(title, message, type, userIds);
+            if (result.success) {
+                alert('✅ បានផ្ញើការជូនដំណឹងដោយជោគជ័យ!');
+                document.getElementById('notifTitle').value = '';
+                document.getElementById('notifMessage').value = '';
+                renderNotifications();
+                updateStats();
+            } else { alert('❌ ' + result.message); }
+        }
+
+        function handleLogout() {
+            if (confirm('តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?')) {
+                userManagement.logout();
+                window.location.href = 'login.html';
+            }
+        }
+
+        window.switchTab = switchTab;
+        window.toggleSidebar = toggleSidebar;
+        window.handleLogout = handleLogout;
+        window.handleCreateNotification = handleCreateNotification;
+        window.renderNotifications = renderNotifications;
+        window.updateStats = updateStats;
+        window.checkSupabaseConnection = checkSupabaseConnection;
+    </script>
+</body>
+</html>
