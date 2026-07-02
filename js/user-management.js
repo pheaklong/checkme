@@ -97,20 +97,17 @@ class UserManagement {
         console.log('🔧 Initializing User Management with Supabase...');
         
         try {
-            // Check if SupabaseConfig is available
             if (typeof SupabaseConfig === 'undefined') {
                 console.error('❌ SupabaseConfig is not loaded!');
                 return;
             }
 
-            // Initialize Supabase
             const initResult = SupabaseConfig.init();
             if (!initResult) {
                 console.error('❌ Supabase initialization failed');
                 return;
             }
             
-            // Check connection
             console.log('🔄 Checking Supabase connection...');
             const connected = await SupabaseConfig.checkConnection();
             
@@ -122,19 +119,13 @@ class UserManagement {
             this.isUsingSupabase = true;
             console.log('✅ Connected to Supabase');
             
-            // Load users from Supabase
             await this.loadUsersFromSupabase();
-            
-            // Ensure admin exists
             await this.ensureAdminExists();
-            
-            // Load current user from session
             this.loadCurrentUser();
             
             this.isInitialized = true;
             console.log('✅ User Management initialized with Supabase');
             
-            // Update UI
             this.updateUI();
             
         } catch (error) {
@@ -148,13 +139,11 @@ class UserManagement {
 
     async ensureAdminExists() {
         try {
-            // Check if admin exists
             const adminExists = this.users.find(u => u.username === 'admin');
             
             if (!adminExists) {
                 console.log('👤 Admin not found, creating default admin...');
                 
-                // Create admin user data
                 const adminData = {
                     id: 'admin_001',
                     username: 'admin',
@@ -171,17 +160,12 @@ class UserManagement {
                     permissions: this.permissions.admin
                 };
                 
-                // Hash password
-                adminData.password = this.hashPassword(adminData.password);
-                
-                // Save to Supabase using the saveUser method
                 const result = await SupabaseConfig.saveUser(adminData);
                 
                 if (result.success) {
                     console.log('✅ Admin user created successfully!');
                     console.log('📝 Username: admin');
                     console.log('📝 Password: admin123');
-                    // Reload users
                     await this.loadUsersFromSupabase();
                 } else {
                     console.error('❌ Failed to create admin:', result.error);
@@ -217,7 +201,7 @@ class UserManagement {
     }
 
     // ============================================
-    // HASH PASSWORD
+    // HASH PASSWORD - SIMPLE VERSION
     // ============================================
 
     hashPassword(password) {
@@ -227,7 +211,7 @@ class UserManagement {
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash;
         }
-        return hash.toString(16);
+        return (hash >>> 0).toString(16);
     }
 
     // ============================================
@@ -239,7 +223,6 @@ class UserManagement {
         if (saved) {
             try {
                 this.currentUser = JSON.parse(saved);
-                // Verify user still exists
                 const userData = this.users.find(u => u.id === this.currentUser.id);
                 if (userData) {
                     const { password, ...userWithoutPassword } = userData;
@@ -261,32 +244,30 @@ class UserManagement {
     async login(username, password) {
         console.log(`🔑 Login attempt for: ${username}`);
         
-        // Wait for initialization if not done
         if (!this.isInitialized) {
             console.log('⏳ Waiting for initialization...');
             await this.init();
         }
         
-        const hashedPassword = this.hashPassword(password);
-        console.log(`🔐 Password hash: ${hashedPassword}`);
-        
-        // Debug: Show users in memory
-        console.log('📋 Users in memory:', this.users.map(u => ({
-            username: u.username,
-            password_hash: u.password ? u.password.substring(0, 10) + '...' : 'null',
-            role: u.role,
-            status: u.status
-        })));
-        
-        // Find user in loaded users
+        // Try plain text match first
         let user = this.users.find(u => 
             u.username === username && 
-            u.password === hashedPassword &&
+            u.password === password &&
             u.status === 'active'
         );
 
-        console.log(`🔍 User found in memory: ${user ? 'YES' : 'NO'}`);
-        
+        // If not found, try hashed
+        if (!user) {
+            const hashedPassword = this.hashPassword(password);
+            console.log(`🔐 Hash for "${password}": ${hashedPassword}`);
+            
+            user = this.users.find(u => 
+                u.username === username && 
+                u.password === hashedPassword &&
+                u.status === 'active'
+            );
+        }
+
         // If not found, try to fetch from Supabase directly
         if (!user && this.isUsingSupabase) {
             try {
@@ -294,12 +275,12 @@ class UserManagement {
                 const supabaseUser = await SupabaseConfig.getUserByUsername(username);
                 if (supabaseUser) {
                     console.log(`✅ Found user in Supabase: ${username}`);
-                    console.log(`🔐 Stored hash: ${supabaseUser.password}`);
-                    console.log(`🔐 Calculated hash: ${hashedPassword}`);
                     
-                    if (supabaseUser.password === hashedPassword && supabaseUser.status === 'active') {
+                    const isMatch = supabaseUser.password === password || 
+                                   supabaseUser.password === this.hashPassword(password);
+                    
+                    if (isMatch && supabaseUser.status === 'active') {
                         user = supabaseUser;
-                        // Update local cache
                         const existingIndex = this.users.findIndex(u => u.id === user.id);
                         if (existingIndex === -1) {
                             this.users.push(user);
@@ -310,7 +291,8 @@ class UserManagement {
                     } else {
                         console.log(`❌ Password mismatch for user: ${username}`);
                         console.log(`   Stored: ${supabaseUser.password}`);
-                        console.log(`   Calculated: ${hashedPassword}`);
+                        console.log(`   Input: ${password}`);
+                        console.log(`   Hashed: ${this.hashPassword(password)}`);
                     }
                 } else {
                     console.log(`❌ User not found in Supabase: ${username}`);
@@ -324,7 +306,6 @@ class UserManagement {
         if (user) {
             console.log(`✅ Login successful for: ${username}`);
             
-            // Update last login
             user.lastLogin = new Date().toISOString();
             
             try {
@@ -333,7 +314,6 @@ class UserManagement {
                 console.warn('Could not update last login in Supabase:', e);
             }
             
-            // Set current user (without password)
             const { password: pwd, ...userWithoutPassword } = user;
             this.currentUser = userWithoutPassword;
             sessionStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
@@ -391,12 +371,10 @@ class UserManagement {
             return { success: false, message: 'អ្នកមិនមានសិទ្ធិបង្កើតអ្នកប្រើប្រាស់ទេ' };
         }
 
-        // Check if username already exists
         if (this.users.find(u => u.username === userData.username)) {
             return { success: false, message: 'ឈ្មោះអ្នកប្រើប្រាស់មានរួចហើយ' };
         }
 
-        // Check if email already exists
         if (this.users.find(u => u.email === userData.email)) {
             return { success: false, message: 'អ៊ីមែលមានរួចហើយ' };
         }
@@ -406,7 +384,7 @@ class UserManagement {
         const newUser = {
             id: id,
             username: userData.username,
-            password: this.hashPassword(userData.password),
+            password: userData.password,
             email: userData.email,
             fullName: userData.fullName,
             role: userData.role || this.roles.STUDENT,
@@ -424,13 +402,11 @@ class UserManagement {
 
         console.log(`👤 Creating user: ${userData.username}`);
         
-        // Save to Supabase
         const result = await SupabaseConfig.saveUser(newUser);
         if (!result.success) {
             return { success: false, message: 'មិនអាចរក្សាទុកអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
         }
 
-        // Update local cache
         this.users.push(newUser);
         
         const { password, ...userWithoutPassword } = newUser;
@@ -457,10 +433,9 @@ class UserManagement {
         }
 
         if (updates.password) {
-            updates.password = this.hashPassword(updates.password);
+            updates.password = updates.password;
         }
 
-        // Update in Supabase
         const updatedUser = { ...this.users[index], ...updates };
         console.log(`✏️ Updating user: ${updatedUser.username}`);
         
@@ -469,7 +444,6 @@ class UserManagement {
             return { success: false, message: 'មិនអាចរក្សាទុកការកែប្រែក្នុងប្រព័ន្ធ: ' + result.error };
         }
 
-        // Update local cache
         this.users[index] = updatedUser;
 
         if (this.currentUser && this.currentUser.id === userId) {
@@ -500,13 +474,11 @@ class UserManagement {
 
         console.log(`🗑️ Deleting user: ${userToDelete?.username || userId}`);
         
-        // Delete from Supabase
         const result = await SupabaseConfig.deleteUser(userId);
         if (!result.success) {
             return { success: false, message: 'មិនអាចលុបអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
         }
 
-        // Update local cache
         this.users = this.users.filter(u => u.id !== userId);
 
         console.log(`✅ User deleted: ${userId}`);
@@ -577,7 +549,6 @@ class UserManagement {
 
         teacher.permissions = { ...teacher.permissions, ...permissions };
         
-        // Update in Supabase
         const result = await SupabaseConfig.updateUserPermissions(teacherId, teacher.permissions);
         if (!result.success) {
             return { success: false, message: 'មិនអាចរក្សាទុកសិទ្ធិក្នុងប្រព័ន្ធ: ' + result.error };
@@ -1069,14 +1040,9 @@ class UserManagement {
 // INITIALIZE USER MANAGEMENT
 // ============================================
 
-// Create instance and expose globally
 const userManagement = new UserManagement();
 window.userManagement = userManagement;
 
-// Also expose to window for debugging
-window.userManagement = userManagement;
-
-// When DOM is ready, update UI
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready, updating UI...');
     if (userManagement && typeof userManagement.updateUI === 'function') {
