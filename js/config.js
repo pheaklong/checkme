@@ -1,12 +1,11 @@
 // ============================================
-// SUPABASE CONFIGURATION - WITH RLS
+// SUPABASE CONFIGURATION
 // ============================================
 
 const SupabaseConfig = {
-    // Supabase credentials - Use ANON KEY only (NOT service role)
-    supabaseUrl: 'https://iziunkyxzfbhayrqwvvs.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6aXVua3l4emZiaGF5cnF3dnZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NzI2NDgsImV4cCI6MjA5ODU0ODY0OH0.tpmY_oSgrQ1LPcPMy9_Ls-ZVl2HyMDgwHZR34gmzTtM',
-    // DO NOT use service role key in frontend!
+    // Supabase credentials
+    supabaseUrl: 'https://xmodwtwlidnwnxrkrvsj.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabase: null,
     isInitialized: false,
 
@@ -37,7 +36,7 @@ const SupabaseConfig = {
                 return false;
             }
 
-            // Create Supabase client with ANON KEY
+            // Create Supabase client
             this.supabase = supabase.createClient(
                 this.supabaseUrl,
                 this.supabaseKey,
@@ -57,63 +56,12 @@ const SupabaseConfig = {
             );
             
             this.isInitialized = true;
-            console.log('✅ Supabase client initialized with ANON KEY');
-            console.log('⚠️ RLS must be enabled with proper policies for security');
+            console.log('✅ Supabase client initialized');
             return true;
         } catch (error) {
             console.error('❌ Supabase initialization error:', error);
             this.isInitialized = true;
             return false;
-        }
-    },
-
-    // ============================================
-    // AUTHENTICATION
-    // ============================================
-
-    async signIn(email, password) {
-        try {
-            if (!this.isInitialized) this.init();
-            if (!this.supabase) throw new Error('Supabase not initialized');
-
-            const { data, error } = await this.supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-
-            if (error) throw error;
-            return { success: true, data: data };
-        } catch (error) {
-            console.error('❌ Sign in error:', error);
-            return { success: false, error: error };
-        }
-    },
-
-    async signOut() {
-        try {
-            if (!this.isInitialized) this.init();
-            if (!this.supabase) throw new Error('Supabase not initialized');
-
-            const { error } = await this.supabase.auth.signOut();
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('❌ Sign out error:', error);
-            return { success: false, error: error };
-        }
-    },
-
-    async getSession() {
-        try {
-            if (!this.isInitialized) this.init();
-            if (!this.supabase) throw new Error('Supabase not initialized');
-
-            const { data, error } = await this.supabase.auth.getSession();
-            if (error) throw error;
-            return { success: true, data: data };
-        } catch (error) {
-            console.error('❌ Get session error:', error);
-            return { success: false, error: error };
         }
     },
 
@@ -134,7 +82,6 @@ const SupabaseConfig = {
             
             console.log('🔍 Checking Supabase connection...');
             
-            // Try a simple query
             const { data, error } = await this.supabase
                 .from(this.tables.users)
                 .select('count')
@@ -158,7 +105,98 @@ const SupabaseConfig = {
     // ============================================
 
     /**
-     * Get all users from Supabase (requires RLS policy)
+     * Save a user to Supabase
+     */
+    async saveUser(user) {
+        try {
+            if (!this.isInitialized) {
+                this.init();
+            }
+            
+            if (!this.supabase) {
+                throw new Error('Supabase client not initialized');
+            }
+
+            console.log(`📝 Saving user: ${user.username}`);
+            
+            // Check if user exists
+            const { data: existing, error: checkError } = await this.supabase
+                .from(this.tables.users)
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            let result;
+            if (existing) {
+                // Update existing user
+                console.log(`🔄 Updating user: ${user.username}`);
+                const { data, error } = await this.supabase
+                    .from(this.tables.users)
+                    .update({
+                        username: user.username,
+                        email: user.email,
+                        full_name: user.fullName,
+                        role: user.role,
+                        status: user.status || 'active',
+                        permissions: user.permissions || {},
+                        class: user.class || null,
+                        student_id: user.studentId || null,
+                        phone: user.phone || null,
+                        parent_name: user.parentName || null,
+                        parent_phone: user.parentPhone || null,
+                        address: user.address || null,
+                        last_login: user.lastLogin || null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id)
+                    .select();
+                
+                if (error) throw error;
+                result = { data, error: null };
+            } else {
+                // Insert new user
+                console.log(`➕ Inserting user: ${user.username}`);
+                const { data, error } = await this.supabase
+                    .from(this.tables.users)
+                    .insert({
+                        id: user.id,
+                        username: user.username,
+                        password: user.password,
+                        email: user.email,
+                        full_name: user.fullName,
+                        role: user.role,
+                        status: user.status || 'active',
+                        permissions: user.permissions || {},
+                        class: user.class || null,
+                        student_id: user.studentId || null,
+                        phone: user.phone || null,
+                        parent_name: user.parentName || null,
+                        parent_phone: user.parentPhone || null,
+                        address: user.address || null,
+                        created_at: user.createdAt || new Date().toISOString(),
+                        last_login: user.lastLogin || null
+                    })
+                    .select();
+                
+                if (error) throw error;
+                result = { data, error: null };
+            }
+
+            if (result.error) {
+                console.error('❌ Supabase error:', result.error);
+                throw result.error;
+            }
+            
+            console.log(`✅ User saved: ${user.username}`);
+            return { success: true, data: result.data };
+        } catch (error) {
+            console.error('❌ Error saving user:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Get all users from Supabase
      */
     async getAllUsers() {
         try {
@@ -213,7 +251,7 @@ const SupabaseConfig = {
     },
 
     /**
-     * Get user by username (requires RLS policy)
+     * Get user by username
      */
     async getUserByUsername(username) {
         try {
@@ -270,105 +308,7 @@ const SupabaseConfig = {
     },
 
     /**
-     * Create a new user (requires RLS policy)
-     */
-    async createUser(userData) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            if (!this.supabase) {
-                throw new Error('Supabase client not initialized');
-            }
-
-            console.log(`👤 Creating user: ${userData.username}`);
-            
-            const { data, error } = await this.supabase
-                .from(this.tables.users)
-                .insert({
-                    id: userData.id,
-                    username: userData.username,
-                    password: userData.password,
-                    email: userData.email,
-                    full_name: userData.fullName,
-                    role: userData.role,
-                    status: userData.status || 'active',
-                    permissions: userData.permissions || {},
-                    class: userData.class || null,
-                    student_id: userData.studentId || null,
-                    phone: userData.phone || null,
-                    parent_name: userData.parentName || null,
-                    parent_phone: userData.parentPhone || null,
-                    address: userData.address || null,
-                    created_at: userData.createdAt || new Date().toISOString()
-                })
-                .select();
-
-            if (error) {
-                console.error('❌ Error creating user:', error);
-                throw error;
-            }
-            
-            console.log(`✅ User created: ${userData.username}`);
-            return { success: true, data: data?.[0] || null };
-        } catch (error) {
-            console.error('❌ Error creating user:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    /**
-     * Update a user (requires RLS policy)
-     */
-    async updateUser(userId, updates) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            if (!this.supabase) {
-                throw new Error('Supabase client not initialized');
-            }
-
-            console.log(`✏️ Updating user: ${userId}`);
-            
-            const { data, error } = await this.supabase
-                .from(this.tables.users)
-                .update({
-                    username: updates.username,
-                    email: updates.email,
-                    full_name: updates.fullName,
-                    role: updates.role,
-                    status: updates.status || 'active',
-                    permissions: updates.permissions || {},
-                    class: updates.class || null,
-                    student_id: updates.studentId || null,
-                    phone: updates.phone || null,
-                    parent_name: updates.parentName || null,
-                    parent_phone: updates.parentPhone || null,
-                    address: updates.address || null,
-                    last_login: updates.lastLogin || null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', userId)
-                .select();
-
-            if (error) {
-                console.error('❌ Error updating user:', error);
-                throw error;
-            }
-            
-            console.log(`✅ User updated: ${userId}`);
-            return { success: true, data: data?.[0] || null };
-        } catch (error) {
-            console.error('❌ Error updating user:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    /**
-     * Delete a user (requires RLS policy)
+     * Delete a user
      */
     async deleteUser(userId) {
         try {
@@ -401,7 +341,7 @@ const SupabaseConfig = {
     },
 
     /**
-     * Update user permissions (requires RLS policy)
+     * Update user permissions
      */
     async updateUserPermissions(userId, permissions) {
         try {
@@ -437,7 +377,7 @@ const SupabaseConfig = {
     },
 
     /**
-     * Update last login (requires RLS policy)
+     * Update last login
      */
     async updateLastLogin(userId) {
         try {
@@ -553,7 +493,6 @@ const SupabaseConfig = {
                 throw new Error('Supabase client not initialized');
             }
 
-            // Get current notification
             const { data, error } = await this.supabase
                 .from(this.tables.notifications)
                 .select('read_by')
@@ -637,7 +576,6 @@ const SupabaseConfig = {
             if (records.length === 0) return true;
 
             const first = records[0];
-            // Delete existing records
             await this.supabase
                 .from(this.tables.attendance)
                 .delete()
@@ -646,7 +584,6 @@ const SupabaseConfig = {
                 .eq('date', first.date)
                 .eq('time_slot', first.time_slot);
 
-            // Insert new records
             for (const record of records) {
                 const { error } = await this.supabase
                     .from(this.tables.attendance)
@@ -689,7 +626,6 @@ const SupabaseConfig = {
                 throw new Error('Supabase client not initialized');
             }
 
-            // Try from students table
             const { data, error } = await this.supabase
                 .from(this.tables.students)
                 .select('*')
@@ -712,7 +648,6 @@ const SupabaseConfig = {
                 }));
             }
 
-            // Try from users table
             const { data: userData, error: userError } = await this.supabase
                 .from(this.tables.users)
                 .select('*')
@@ -754,7 +689,6 @@ const SupabaseConfig = {
                 throw new Error('Supabase client not initialized');
             }
 
-            // Try from students table
             const { data, error } = await this.supabase
                 .from(this.tables.students)
                 .select('class')
@@ -768,7 +702,6 @@ const SupabaseConfig = {
                 return classes.sort();
             }
 
-            // Try from users table
             const { data: userData, error: userError } = await this.supabase
                 .from(this.tables.users)
                 .select('class')
