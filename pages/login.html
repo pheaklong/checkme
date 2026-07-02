@@ -158,6 +158,8 @@
         <div class="test-credentials">
             <p><strong>📝 សម្រាប់សាកល្បង៖</strong></p>
             <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong> <span class="role-badge admin">Admin</span></p>
+            <p>👨‍🏫 គ្រូ: <strong>teacher</strong> / <strong>teacher123</strong> <span class="role-badge teacher">គ្រូ</span></p>
+            <p>👨‍🎓 សិស្ស: <strong>student</strong> / <strong>student123</strong> <span class="role-badge student">សិស្ស</span></p>
         </div>
     </div>
 
@@ -278,10 +280,8 @@
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async function() {
-            // Check connection
             await checkConnection();
 
-            // Check if already logged in
             if (typeof userManagement !== 'undefined' && userManagement.isLoggedIn()) {
                 const user = userManagement.getCurrentUser();
                 const redirectMap = {
@@ -294,13 +294,8 @@
                 return;
             }
 
-            // Focus on username field
             document.getElementById('username').focus();
         });
-
-        // ============================================
-        // MAKE FUNCTIONS GLOBAL
-        // ============================================
 
         window.handleLogin = handleLogin;
         window.checkConnection = checkConnection;
