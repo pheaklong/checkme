@@ -199,6 +199,59 @@
         }
 
         // ============================================
+        // PAGE LOAD - CHECK SESSION
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('📄 Login page loaded');
+            
+            // Check connection to Supabase
+            await checkConnection();
+
+            // Check if user is already logged in
+            if (typeof userManagement !== 'undefined') {
+                // Wait for initialization
+                if (!userManagement.isInitialized) {
+                    console.log('⏳ Waiting for userManagement to initialize...');
+                    await new Promise((resolve) => {
+                        const checkInterval = setInterval(() => {
+                            if (userManagement.isInitialized) {
+                                clearInterval(checkInterval);
+                                resolve();
+                            }
+                        }, 200);
+                    });
+                }
+                
+                // Check if user is logged in
+                if (userManagement.isLoggedIn()) {
+                    const user = userManagement.getCurrentUser();
+                    console.log(`👤 User already logged in: ${user.username} (${user.role})`);
+                    
+                    const redirectMap = {
+                        'admin': 'admin-dashboard.html',
+                        'editor': 'editor-dashboard.html',
+                        'teacher': 'teacher-dashboard.html',
+                        'student': 'student-dashboard.html'
+                    };
+                    const redirectUrl = redirectMap[user.role] || 'index.html';
+                    
+                    console.log(`🔄 Redirecting to: ${redirectUrl}`);
+                    
+                    // Redirect after a short delay
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 500);
+                    return;
+                }
+            }
+
+            // If not logged in, focus on username field
+            document.getElementById('username').focus();
+            console.log('🔓 Ready for login');
+        });
+
+        // ============================================
         // LOGIN HANDLER
         // ============================================
 
@@ -228,6 +281,10 @@
                 if (result.success) {
                     errorEl.classList.remove('show');
                     const role = result.user.role;
+                    
+                    console.log(`✅ Login successful for: ${username}`);
+                    console.log(`📌 Role: ${role}`);
+                    
                     const redirectMap = {
                         'admin': 'admin-dashboard.html',
                         'editor': 'editor-dashboard.html',
@@ -239,6 +296,7 @@
                     btn.innerHTML = '✅ ចូលប្រើដោយជោគជ័យ!';
                     btn.style.background = '#22c55e';
                     
+                    // Redirect after a short delay
                     setTimeout(() => {
                         window.location.href = redirectUrl;
                     }, 500);
@@ -276,26 +334,8 @@
         });
 
         // ============================================
-        // PAGE LOAD
+        // MAKE FUNCTIONS GLOBAL
         // ============================================
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            await checkConnection();
-
-            if (typeof userManagement !== 'undefined' && userManagement.isLoggedIn()) {
-                const user = userManagement.getCurrentUser();
-                const redirectMap = {
-                    'admin': 'admin-dashboard.html',
-                    'editor': 'editor-dashboard.html',
-                    'teacher': 'teacher-dashboard.html',
-                    'student': 'student-dashboard.html'
-                };
-                window.location.href = redirectMap[user.role] || 'index.html';
-                return;
-            }
-
-            document.getElementById('username').focus();
-        });
 
         window.handleLogin = handleLogin;
         window.checkConnection = checkConnection;
