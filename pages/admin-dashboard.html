@@ -181,36 +181,66 @@
     <script src="../js/config.js"></script>
     <script src="../js/user-management.js"></script>
     <script>
+        // ============================================
+        // PAGE LOAD - CHECK SESSION
+        // ============================================
+
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Admin dashboard loading...');
+            console.log('📄 Admin dashboard loading...');
 
             if (typeof userManagement === 'undefined') {
-                console.error('User management not loaded');
+                console.error('❌ User management not loaded');
+                window.location.href = 'login.html';
                 return;
             }
 
+            // Wait for userManagement to initialize
+            if (!userManagement.isInitialized) {
+                console.log('⏳ Waiting for userManagement to initialize...');
+                await new Promise((resolve) => {
+                    const checkInterval = setInterval(() => {
+                        if (userManagement.isInitialized) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 200);
+                });
+            }
+
+            // Check if user is logged in
             if (!userManagement.isLoggedIn()) {
+                console.log('❌ User not logged in, redirecting to login...');
                 window.location.href = 'login.html';
                 return;
             }
 
             const user = userManagement.getCurrentUser();
+            console.log(`👤 User: ${user.username} (${user.role})`);
+            
+            // Check if user has admin role
             if (user.role !== 'admin') {
                 alert('អ្នកមិនមានសិទ្ធិចូលមើលទំព័រនេះទេ');
                 window.location.href = 'login.html';
                 return;
             }
 
+            // Display user info
             document.getElementById('userDisplay').textContent = `👤 ${user.fullName}`;
             document.getElementById('roleBadge').textContent = 'Admin';
             document.getElementById('roleBadge').className = 'badge badge-admin';
 
+            console.log('✅ Admin dashboard loaded successfully');
+
+            // Load data
             await updateStats();
             userManagement.renderUserManagement('userManagementContainer');
             renderNotifications();
             await checkSupabaseConnection();
-            console.log('Admin dashboard loaded');
         });
+
+        // ============================================
+        // TOGGLE SIDEBAR
+        // ============================================
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
@@ -223,6 +253,10 @@
                 document.getElementById('sidebarOverlay').classList.remove('active');
             }
         });
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -242,6 +276,10 @@
 
             if (window.innerWidth <= 768) toggleSidebar();
         }
+
+        // ============================================
+        // SUPABASE CONNECTION
+        // ============================================
 
         async function checkSupabaseConnection() {
             const statusEl = document.getElementById('supabaseStatus');
@@ -266,6 +304,10 @@
             }
         }
 
+        // ============================================
+        // STATS
+        // ============================================
+
         async function updateStats() {
             try {
                 const users = userManagement.getUsers();
@@ -276,6 +318,10 @@
                 document.getElementById('totalNotifications').textContent = notifications.length;
             } catch (error) { console.error('Error updating stats:', error); }
         }
+
+        // ============================================
+        // NOTIFICATIONS
+        // ============================================
 
         function renderNotifications() {
             const container = document.getElementById('notificationList');
@@ -324,12 +370,23 @@
             } else { alert('❌ ' + result.message); }
         }
 
+        // ============================================
+        // LOGOUT
+        // ============================================
+
         function handleLogout() {
             if (confirm('តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?')) {
                 userManagement.logout();
+                // Clear all storage
+                sessionStorage.removeItem('current_user');
+                localStorage.removeItem('current_user');
                 window.location.href = 'login.html';
             }
         }
+
+        // ============================================
+        // MAKE FUNCTIONS GLOBAL
+        // ============================================
 
         window.switchTab = switchTab;
         window.toggleSidebar = toggleSidebar;
