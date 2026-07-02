@@ -83,7 +83,6 @@ class UserManagement {
             }
         };
         
-        // Start initialization
         this.init();
     }
 
@@ -201,7 +200,7 @@ class UserManagement {
     }
 
     // ============================================
-    // HASH PASSWORD - SIMPLE VERSION
+    // HASH PASSWORD
     // ============================================
 
     hashPassword(password) {
@@ -215,30 +214,39 @@ class UserManagement {
     }
 
     // ============================================
-    // LOAD CURRENT USER
+    // LOAD CURRENT USER - FIXED
     // ============================================
 
     loadCurrentUser() {
-        const saved = sessionStorage.getItem('current_user');
+        // Try sessionStorage first, then localStorage
+        const saved = sessionStorage.getItem('current_user') || localStorage.getItem('current_user');
         if (saved) {
             try {
                 this.currentUser = JSON.parse(saved);
+                // Verify user still exists
                 const userData = this.users.find(u => u.id === this.currentUser.id);
                 if (userData) {
                     const { password, ...userWithoutPassword } = userData;
                     this.currentUser = userWithoutPassword;
+                    // Refresh session storage
+                    sessionStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
+                    localStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
+                    console.log('✅ Session loaded for user:', this.currentUser.username);
                 } else {
                     this.currentUser = null;
                     sessionStorage.removeItem('current_user');
+                    localStorage.removeItem('current_user');
                 }
             } catch (e) {
                 this.currentUser = null;
+                sessionStorage.removeItem('current_user');
+                localStorage.removeItem('current_user');
             }
         }
     }
 
     // ============================================
-    // AUTHENTICATION METHODS
+    // AUTHENTICATION METHODS - FIXED
     // ============================================
 
     async login(username, password) {
@@ -290,9 +298,6 @@ class UserManagement {
                         console.log(`✅ User authenticated: ${username}`);
                     } else {
                         console.log(`❌ Password mismatch for user: ${username}`);
-                        console.log(`   Stored: ${supabaseUser.password}`);
-                        console.log(`   Input: ${password}`);
-                        console.log(`   Hashed: ${this.hashPassword(password)}`);
                     }
                 } else {
                     console.log(`❌ User not found in Supabase: ${username}`);
@@ -306,6 +311,7 @@ class UserManagement {
         if (user) {
             console.log(`✅ Login successful for: ${username}`);
             
+            // Update last login
             user.lastLogin = new Date().toISOString();
             
             try {
@@ -314,9 +320,17 @@ class UserManagement {
                 console.warn('Could not update last login in Supabase:', e);
             }
             
+            // Set current user (without password)
             const { password: pwd, ...userWithoutPassword } = user;
             this.currentUser = userWithoutPassword;
+            
+            // Save to both sessionStorage and localStorage for persistence
             sessionStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
+            localStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
+            
+            console.log('✅ Session saved for user:', userWithoutPassword.username);
+            console.log('📌 Role:', userWithoutPassword.role);
+            
             this.updateUI();
             
             return { success: true, user: userWithoutPassword };
@@ -329,6 +343,7 @@ class UserManagement {
     logout() {
         this.currentUser = null;
         sessionStorage.removeItem('current_user');
+        localStorage.removeItem('current_user');
         this.updateUI();
         return { success: true };
     }
@@ -450,6 +465,7 @@ class UserManagement {
             const { password, ...userWithoutPassword } = updatedUser;
             this.currentUser = userWithoutPassword;
             sessionStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
+            localStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
             this.updateUI();
         }
 
