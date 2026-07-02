@@ -1,5 +1,5 @@
 // ============================================
-// USER MANAGEMENT SYSTEM - WITH RLS
+// USER MANAGEMENT SYSTEM - SUPABASE
 // ============================================
 
 class UserManagement {
@@ -83,6 +83,7 @@ class UserManagement {
             }
         };
         
+        // Start initialization
         this.init();
     }
 
@@ -93,7 +94,7 @@ class UserManagement {
     async init() {
         if (this.isInitialized) return;
         
-        console.log('🔧 Initializing User Management with Supabase (RLS enabled)...');
+        console.log('🔧 Initializing User Management with Supabase...');
         
         try {
             // Check if SupabaseConfig is available
@@ -124,17 +125,72 @@ class UserManagement {
             // Load users from Supabase
             await this.loadUsersFromSupabase();
             
+            // Ensure admin exists
+            await this.ensureAdminExists();
+            
             // Load current user from session
             this.loadCurrentUser();
             
             this.isInitialized = true;
-            console.log('✅ User Management initialized with Supabase (RLS enabled)');
+            console.log('✅ User Management initialized with Supabase');
             
             // Update UI
             this.updateUI();
             
         } catch (error) {
             console.error('❌ Initialization error:', error);
+        }
+    }
+
+    // ============================================
+    // ENSURE ADMIN EXISTS
+    // ============================================
+
+    async ensureAdminExists() {
+        try {
+            // Check if admin exists
+            const adminExists = this.users.find(u => u.username === 'admin');
+            
+            if (!adminExists) {
+                console.log('👤 Admin not found, creating default admin...');
+                
+                // Create admin user data
+                const adminData = {
+                    id: 'admin_001',
+                    username: 'admin',
+                    password: 'admin123',
+                    fullName: 'Administrator',
+                    email: 'admin@school.edu.kh',
+                    role: this.roles.ADMIN,
+                    class: null,
+                    studentId: null,
+                    phone: null,
+                    parentName: null,
+                    parentPhone: null,
+                    address: null,
+                    permissions: this.permissions.admin
+                };
+                
+                // Hash password
+                adminData.password = this.hashPassword(adminData.password);
+                
+                // Save to Supabase using the saveUser method
+                const result = await SupabaseConfig.saveUser(adminData);
+                
+                if (result.success) {
+                    console.log('✅ Admin user created successfully!');
+                    console.log('📝 Username: admin');
+                    console.log('📝 Password: admin123');
+                    // Reload users
+                    await this.loadUsersFromSupabase();
+                } else {
+                    console.error('❌ Failed to create admin:', result.error);
+                }
+            } else {
+                console.log('✅ Admin user already exists');
+            }
+        } catch (error) {
+            console.error('❌ Error ensuring admin exists:', error);
         }
     }
 
@@ -151,27 +207,12 @@ class UserManagement {
                 this.users = users;
                 console.log(`✅ Loaded ${users.length} users from Supabase`);
             } else {
-                console.log('No users found in Supabase. Please create admin user manually.');
-                console.log('💡 Run this SQL in Supabase SQL Editor:');
-                console.log(`
-                    INSERT INTO users (id, username, password, email, full_name, role, status, permissions, created_at)
-                    VALUES (
-                        'admin_001',
-                        'admin',
-                        '2a9d2a8b3f4e5d6c7b8a9f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c',
-                        'admin@school.edu.kh',
-                        'Administrator',
-                        'admin',
-                        'active',
-                        '{"create_user": true, "delete_user": true, "edit_user": true, "view_all": true, "manage_roles": true, "manage_system": true, "view_attendance": true, "view_grades": true, "manage_grades": true, "manage_attendance": true, "view_student_results": true, "create_notification": true, "assign_teacher_permissions": true}',
-                        NOW()
-                    );
-                `);
+                console.log('⚠️ No users found in Supabase');
+                this.users = [];
             }
         } catch (error) {
             console.error('❌ Error loading users from Supabase:', error);
-            console.log('💡 Make sure RLS policies are created and user exists in Supabase.');
-            throw error;
+            this.users = [];
         }
     }
 
@@ -227,6 +268,15 @@ class UserManagement {
         }
         
         const hashedPassword = this.hashPassword(password);
+        console.log(`🔐 Password hash: ${hashedPassword}`);
+        
+        // Debug: Show users in memory
+        console.log('📋 Users in memory:', this.users.map(u => ({
+            username: u.username,
+            password_hash: u.password ? u.password.substring(0, 10) + '...' : 'null',
+            role: u.role,
+            status: u.status
+        })));
         
         // Find user in loaded users
         let user = this.users.find(u => 
@@ -235,23 +285,35 @@ class UserManagement {
             u.status === 'active'
         );
 
+        console.log(`🔍 User found in memory: ${user ? 'YES' : 'NO'}`);
+        
         // If not found, try to fetch from Supabase directly
         if (!user && this.isUsingSupabase) {
             try {
                 console.log(`🔍 Looking for user in Supabase: ${username}`);
                 const supabaseUser = await SupabaseConfig.getUserByUsername(username);
-                if (supabaseUser && supabaseUser.password === hashedPassword && supabaseUser.status === 'active') {
-                    user = supabaseUser;
-                    // Update local cache
-                    const existingIndex = this.users.findIndex(u => u.id === user.id);
-                    if (existingIndex === -1) {
-                        this.users.push(user);
+                if (supabaseUser) {
+                    console.log(`✅ Found user in Supabase: ${username}`);
+                    console.log(`🔐 Stored hash: ${supabaseUser.password}`);
+                    console.log(`🔐 Calculated hash: ${hashedPassword}`);
+                    
+                    if (supabaseUser.password === hashedPassword && supabaseUser.status === 'active') {
+                        user = supabaseUser;
+                        // Update local cache
+                        const existingIndex = this.users.findIndex(u => u.id === user.id);
+                        if (existingIndex === -1) {
+                            this.users.push(user);
+                        } else {
+                            this.users[existingIndex] = user;
+                        }
+                        console.log(`✅ User authenticated: ${username}`);
                     } else {
-                        this.users[existingIndex] = user;
+                        console.log(`❌ Password mismatch for user: ${username}`);
+                        console.log(`   Stored: ${supabaseUser.password}`);
+                        console.log(`   Calculated: ${hashedPassword}`);
                     }
-                    console.log(`✅ User found in Supabase: ${username}`);
                 } else {
-                    console.log(`❌ User not found in Supabase or password mismatch: ${username}`);
+                    console.log(`❌ User not found in Supabase: ${username}`);
                 }
             } catch (error) {
                 console.error('Error checking user in Supabase:', error);
@@ -363,7 +425,7 @@ class UserManagement {
         console.log(`👤 Creating user: ${userData.username}`);
         
         // Save to Supabase
-        const result = await SupabaseConfig.createUser(newUser);
+        const result = await SupabaseConfig.saveUser(newUser);
         if (!result.success) {
             return { success: false, message: 'មិនអាចរក្សាទុកអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
         }
@@ -402,7 +464,7 @@ class UserManagement {
         const updatedUser = { ...this.users[index], ...updates };
         console.log(`✏️ Updating user: ${updatedUser.username}`);
         
-        const result = await SupabaseConfig.updateUser(userId, updatedUser);
+        const result = await SupabaseConfig.saveUser(updatedUser);
         if (!result.success) {
             return { success: false, message: 'មិនអាចរក្សាទុកការកែប្រែក្នុងប្រព័ន្ធ: ' + result.error };
         }
@@ -741,10 +803,6 @@ class UserManagement {
         }
     }
 
-    // ============================================
-    // CREATE USER FORM
-    // ============================================
-
     showCreateUserForm() {
         if (!this.hasPermission('create_user')) {
             alert('អ្នកមិនមានសិទ្ធិបង្កើតអ្នកប្រើប្រាស់ទេ');
@@ -757,17 +815,56 @@ class UserManagement {
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <h3 class="text-xl font-bold text-gray-800 mb-4">➕ បង្កើតអ្នកប្រើប្រាស់ថ្មី</h3>
                 <form id="createUserForm" onsubmit="window.userManagement.handleCreateUser(event)">
-                    <!-- ... form fields ... -->
-                    <div class="flex gap-2 mt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">បង្កើត</button>
-                        <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition">បោះបង់</button>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">ឈ្មោះអ្នកប្រើប្រាស់ *</label>
+                        <input type="text" id="newUsername" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">ពាក្យសម្ងាត់ *</label>
+                        <input type="password" id="newPassword" class="w-full border rounded-lg px-3 py-2" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">ឈ្មោះពេញ *</label>
+                        <input type="text" id="newFullName" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">អ៊ីមែល *</label>
+                        <input type="email" id="newEmail" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">តួនាទី *</label>
+                        <select id="newRole" class="w-full border rounded-lg px-3 py-2" required>
+                            <option value="student">សិស្ស</option>
+                            <option value="teacher">គ្រូ</option>
+                            ${this.hasPermission('manage_roles') ? `<option value="editor">Editor</option>` : ''}
+                            ${this.currentUser && this.currentUser.role === this.roles.ADMIN ? `<option value="admin">Admin</option>` : ''}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="studentFields" style="display:none">
+                        <label class="block text-sm font-medium text-gray-700">ថ្នាក់</label>
+                        <input type="text" id="newClass" class="w-full border rounded-lg px-3 py-2" placeholder="ឧ. 12A">
+                    </div>
+                    <div class="mb-3" id="studentFields2" style="display:none">
+                        <label class="block text-sm font-medium text-gray-700">លេខសម្គាល់សិស្ស</label>
+                        <input type="text" id="newStudentId" class="w-full border rounded-lg px-3 py-2" placeholder="ឧ. STU001">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">លេខទូរស័ព្ទ</label>
+                        <input type="tel" id="newPhone" class="w-full border rounded-lg px-3 py-2">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+                            បង្កើត
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition">
+                            បោះបង់
+                        </button>
                     </div>
                 </form>
             </div>
         `;
         document.body.appendChild(modal);
 
-        // Show/hide student fields based on role
         document.getElementById('newRole').addEventListener('change', function() {
             const show = this.value === 'student';
             document.getElementById('studentFields').style.display = show ? 'block' : 'none';
@@ -775,16 +872,211 @@ class UserManagement {
         });
     }
 
-    // ... (rest of methods remain the same)
+    async handleCreateUser(event) {
+        event.preventDefault();
+        
+        const userData = {
+            username: document.getElementById('newUsername').value,
+            password: document.getElementById('newPassword').value,
+            fullName: document.getElementById('newFullName').value,
+            email: document.getElementById('newEmail').value,
+            role: document.getElementById('newRole').value,
+            class: document.getElementById('newClass').value || null,
+            studentId: document.getElementById('newStudentId').value || null,
+            phone: document.getElementById('newPhone').value || null
+        };
+
+        const result = await this.createUser(userData);
+        if (result.success) {
+            alert('✅ បានបង្កើតអ្នកប្រើប្រាស់ដោយជោគជ័យ!');
+            document.querySelector('.fixed')?.remove();
+            this.renderUserManagement('userManagementContainer');
+        } else {
+            alert('❌ ' + result.message);
+        }
+    }
+
+    async editUser(userId) {
+        const user = this.getUserById(userId);
+        if (!user) {
+            alert('រកមិនឃើញអ្នកប្រើប្រាស់');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">✏️ កែប្រែអ្នកប្រើប្រាស់</h3>
+                <form id="editUserForm" onsubmit="window.userManagement.handleEditUser(event, '${userId}')">
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">ឈ្មោះពេញ</label>
+                        <input type="text" id="editFullName" class="w-full border rounded-lg px-3 py-2" value="${user.fullName}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">អ៊ីមែល</label>
+                        <input type="email" id="editEmail" class="w-full border rounded-lg px-3 py-2" value="${user.email}" required>
+                    </div>
+                    ${this.hasPermission('manage_roles') ? `
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700">តួនាទី</label>
+                            <select id="editRole" class="w-full border rounded-lg px-3 py-2">
+                                <option value="student" ${user.role === 'student' ? 'selected' : ''}>សិស្ស</option>
+                                <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>គ្រូ</option>
+                                ${this.currentUser && this.currentUser.role === this.roles.ADMIN ? `
+                                    <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>Editor</option>
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                ` : ''}
+                            </select>
+                        </div>
+                    ` : ''}
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">ស្ថានភាព</label>
+                        <select id="editStatus" class="w-full border rounded-lg px-3 py-2">
+                            <option value="active" ${user.status === 'active' ? 'selected' : ''}>សកម្ម</option>
+                            <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>អសកម្ម</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700">ពាក្យសម្ងាត់ថ្មី (ទុកចោលប្រសិនបើមិនចង់ប្តូរ)</label>
+                        <input type="password" id="editPassword" class="w-full border rounded-lg px-3 py-2" placeholder="បញ្ចូលពាក្យសម្ងាត់ថ្មី">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+                            រក្សាទុក
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition">
+                            បោះបង់
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    async handleEditUser(event, userId) {
+        event.preventDefault();
+        
+        const updates = {
+            fullName: document.getElementById('editFullName').value,
+            email: document.getElementById('editEmail').value,
+            status: document.getElementById('editStatus').value
+        };
+
+        const roleSelect = document.getElementById('editRole');
+        if (roleSelect) {
+            updates.role = roleSelect.value;
+        }
+
+        const password = document.getElementById('editPassword').value;
+        if (password) {
+            updates.password = password;
+        }
+
+        const result = await this.updateUser(userId, updates);
+        if (result.success) {
+            alert('✅ បានកែប្រែអ្នកប្រើប្រាស់ដោយជោគជ័យ!');
+            document.querySelector('.fixed')?.remove();
+            this.renderUserManagement('userManagementContainer');
+        } else {
+            alert('❌ ' + result.message);
+        }
+    }
+
+    async deleteUser(userId) {
+        if (!confirm('តើអ្នកប្រាកដជាចង់លុបអ្នកប្រើប្រាស់នេះមែនទេ?')) return;
+
+        const result = await this.deleteUser(userId);
+        if (result.success) {
+            alert('✅ បានលុបអ្នកប្រើប្រាស់ដោយជោគជ័យ!');
+            this.renderUserManagement('userManagementContainer');
+        } else {
+            alert('❌ ' + result.message);
+        }
+    }
+
+    async manageTeacherPermissions(teacherId) {
+        const teacher = this.getUserById(teacherId);
+        if (!teacher) {
+            alert('រកមិនឃើញគ្រូ');
+            return;
+        }
+
+        const permissions = this.getTeacherPermissions(teacherId) || this.permissions[this.roles.TEACHER];
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">🔑 កំណត់សិទ្ធិគ្រូ</h3>
+                <p class="text-sm text-gray-500 mb-4">គ្រូ៖ <strong>${teacher.fullName}</strong></p>
+                <form id="permissionForm" onsubmit="window.userManagement.handlePermissionUpdate(event, '${teacherId}')">
+                    <div class="space-y-2 mb-4">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="perm_attendance" ${permissions.take_attendance ? 'checked' : ''}>
+                            <span>ស្រង់វត្តមាន</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="perm_grades" ${permissions.enter_grades ? 'checked' : ''}>
+                            <span>បញ្ជូលពិន្ទុ</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="perm_results" ${permissions.view_student_results ? 'checked' : ''}>
+                            <span>មើលលទ្ធផលសិស្ស</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="perm_manage" ${permissions.manage_grades ? 'checked' : ''}>
+                            <span>គ្រប់គ្រងពិន្ទុ</span>
+                        </label>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+                            រក្សាទុក
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition">
+                            បោះបង់
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    async handlePermissionUpdate(event, teacherId) {
+        event.preventDefault();
+        
+        const permissions = {
+            take_attendance: document.getElementById('perm_attendance').checked,
+            enter_grades: document.getElementById('perm_grades').checked,
+            view_student_results: document.getElementById('perm_results').checked,
+            manage_grades: document.getElementById('perm_manage').checked
+        };
+
+        const result = await this.assignTeacherPermissions(teacherId, permissions);
+        if (result.success) {
+            alert('✅ បានកំណត់សិទ្ធិដោយជោគជ័យ!');
+            document.querySelector('.fixed')?.remove();
+            this.renderUserManagement('userManagementContainer');
+        } else {
+            alert('❌ ' + result.message);
+        }
+    }
 }
 
 // ============================================
 // INITIALIZE USER MANAGEMENT
 // ============================================
 
+// Create instance and expose globally
 const userManagement = new UserManagement();
 window.userManagement = userManagement;
 
+// Also expose to window for debugging
+window.userManagement = userManagement;
+
+// When DOM is ready, update UI
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready, updating UI...');
     if (userManagement && typeof userManagement.updateUI === 'function') {
@@ -793,48 +1085,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('📦 user-management.js loaded');
-
-
-// ============================================
-// DEBUG: CHECK PASSWORD
-// ============================================
-
-// បន្ថែមកូដនេះក្នុង login() method មុនពេលប្រៀបធៀប password
-
-async login(username, password) {
-    console.log(`🔑 Login attempt for: ${username}`);
-    
-    if (!this.isInitialized) {
-        console.log('⏳ Waiting for initialization...');
-        await this.init();
-    }
-    
-    const hashedPassword = this.hashPassword(password);
-    console.log(`🔐 Password hash for "${password}": ${hashedPassword}`);
-    
-    // Show all users for debugging
-    console.log('📋 All users in memory:', this.users.map(u => ({
-        username: u.username,
-        password_hash: u.password,
-        role: u.role,
-        status: u.status
-    })));
-    
-    // Find user
-    let user = this.users.find(u => 
-        u.username === username && 
-        u.password === hashedPassword &&
-        u.status === 'active'
-    );
-
-    console.log(`🔍 User found in memory: ${user ? 'YES' : 'NO'}`);
-    if (user) {
-        console.log(`👤 User details:`, {
-            username: user.username,
-            role: user.role,
-            status: user.status
-        });
-    }
-
-    // ... rest of the code
-}
