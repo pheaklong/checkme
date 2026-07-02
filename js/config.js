@@ -4,8 +4,8 @@
 
 const SupabaseConfig = {
     // Supabase credentials
-    supabaseUrl: 'https://iziunkyxzfbhayrqwvvs.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6aXVua3l4emZiaGF5cnF3dnZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NzI2NDgsImV4cCI6MjA5ODU0ODY0OH0.tpmY_oSgrQ1LPcPMy9_Ls-ZVl2HyMDgwHZR34gmzTtM',
+    supabaseUrl: 'https://xmodwtwlidnwnxrkrvsj.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabase: null,
     isInitialized: false,
 
@@ -28,15 +28,12 @@ const SupabaseConfig = {
         if (this.isInitialized) return true;
         
         try {
-            // Check if supabase library is loaded
             if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
                 console.error('❌ Supabase library not loaded!');
-                console.log('📦 Please add: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>');
                 this.isInitialized = true;
                 return false;
             }
 
-            // Create Supabase client
             this.supabase = supabase.createClient(
                 this.supabaseUrl,
                 this.supabaseKey,
@@ -104,9 +101,6 @@ const SupabaseConfig = {
     // USER MANAGEMENT FUNCTIONS
     // ============================================
 
-    /**
-     * Save a user to Supabase
-     */
     async saveUser(user) {
         try {
             if (!this.isInitialized) {
@@ -119,7 +113,6 @@ const SupabaseConfig = {
 
             console.log(`📝 Saving user: ${user.username}`);
             
-            // Check if user exists
             const { data: existing, error: checkError } = await this.supabase
                 .from(this.tables.users)
                 .select('id')
@@ -128,7 +121,6 @@ const SupabaseConfig = {
 
             let result;
             if (existing) {
-                // Update existing user
                 console.log(`🔄 Updating user: ${user.username}`);
                 const { data, error } = await this.supabase
                     .from(this.tables.users)
@@ -154,7 +146,6 @@ const SupabaseConfig = {
                 if (error) throw error;
                 result = { data, error: null };
             } else {
-                // Insert new user
                 console.log(`➕ Inserting user: ${user.username}`);
                 const { data, error } = await this.supabase
                     .from(this.tables.users)
@@ -195,9 +186,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Get all users from Supabase
-     */
     async getAllUsers() {
         try {
             if (!this.isInitialized) {
@@ -250,9 +238,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Get user by username
-     */
     async getUserByUsername(username) {
         try {
             if (!this.isInitialized) {
@@ -307,9 +292,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Delete a user
-     */
     async deleteUser(userId) {
         try {
             if (!this.isInitialized) {
@@ -340,9 +322,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Update user permissions
-     */
     async updateUserPermissions(userId, permissions) {
         try {
             if (!this.isInitialized) {
@@ -376,9 +355,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Update last login
-     */
     async updateLastLogin(userId) {
         try {
             if (!this.isInitialized) {
