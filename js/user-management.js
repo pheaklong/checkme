@@ -793,3 +793,48 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('📦 user-management.js loaded');
+
+
+// ============================================
+// DEBUG: CHECK PASSWORD
+// ============================================
+
+// បន្ថែមកូដនេះក្នុង login() method មុនពេលប្រៀបធៀប password
+
+async login(username, password) {
+    console.log(`🔑 Login attempt for: ${username}`);
+    
+    if (!this.isInitialized) {
+        console.log('⏳ Waiting for initialization...');
+        await this.init();
+    }
+    
+    const hashedPassword = this.hashPassword(password);
+    console.log(`🔐 Password hash for "${password}": ${hashedPassword}`);
+    
+    // Show all users for debugging
+    console.log('📋 All users in memory:', this.users.map(u => ({
+        username: u.username,
+        password_hash: u.password,
+        role: u.role,
+        status: u.status
+    })));
+    
+    // Find user
+    let user = this.users.find(u => 
+        u.username === username && 
+        u.password === hashedPassword &&
+        u.status === 'active'
+    );
+
+    console.log(`🔍 User found in memory: ${user ? 'YES' : 'NO'}`);
+    if (user) {
+        console.log(`👤 User details:`, {
+            username: user.username,
+            role: user.role,
+            status: user.status
+        });
+    }
+
+    // ... rest of the code
+}
