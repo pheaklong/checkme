@@ -5,7 +5,7 @@
 const SupabaseConfig = {
     // Supabase credentials - Use ANON KEY only (NOT service role)
     supabaseUrl: 'https://iziunkyxzfbhayrqwvvs.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6aXVua3l4emZiaGF5cnF3dnZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NzI2NDgsImV4cCI6MjA5ODU0ODY0OH0.tpmY_oSgrQ1LPcPMy9_Ls-ZVl2HyMDgwHZR34gmzTtM',
     // DO NOT use service role key in frontend!
     supabase: null,
     isInitialized: false,
