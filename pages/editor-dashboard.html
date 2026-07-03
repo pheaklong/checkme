@@ -96,7 +96,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Schedule Table */
         .schedule-table {
             width: 100%;
             border-collapse: collapse;
@@ -120,9 +119,11 @@
             font-weight: 600;
             color: #4b5563;
             background: #f8fafc;
+            white-space: nowrap;
         }
         .schedule-table .class-cell {
-            min-width: 60px;
+            min-width: 80px;
+            position: relative;
         }
         .schedule-table .class-cell select {
             width: 100%;
@@ -131,6 +132,7 @@
             border-radius: 4px;
             font-size: 12px;
             background: white;
+            cursor: pointer;
         }
         .schedule-table .class-cell select:focus {
             outline: none;
@@ -143,6 +145,21 @@
         .schedule-table .class-cell.has-class select {
             border-color: #4f46e5;
         }
+        .schedule-table .class-cell.conflict {
+            background: #fee2e2 !important;
+        }
+        .schedule-table .class-cell.conflict select {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        .schedule-table .class-cell.conflict::after {
+            content: '⚠️';
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 14px;
+        }
+        
         .day-label {
             font-weight: 600;
             color: #374151;
@@ -151,7 +168,6 @@
             color: #ef4444;
         }
         
-        /* Teacher Selection */
         .teacher-select-card {
             background: #f8fafc;
             border-radius: 8px;
@@ -171,7 +187,6 @@
             border-color: #4f46e5;
         }
         
-        /* Subject Tags */
         .subject-tag {
             display: inline-block;
             padding: 2px 12px;
@@ -397,6 +412,18 @@
         .toast.success { background: #22c55e; }
         .toast.error { background: #ef4444; }
         .toast.info { background: #4f46e5; }
+        .toast.warning { background: #f59e0b; }
+        
+        .legend-color {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 4px;
+        }
+        .legend-color.has-class { background: #dbeafe; border: 1px solid #4f46e5; }
+        .legend-color.conflict { background: #fee2e2; border: 1px solid #ef4444; }
+        .legend-color.empty { background: white; border: 1px solid #d1d5db; }
     </style>
 </head>
 <body>
@@ -448,10 +475,9 @@
     <!-- MAIN CONTENT -->
     <!-- ============================================ -->
     <div class="main-content container mx-auto">
-        <!-- Welcome Section -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">📝 ផ្ទាំងគ្រប់គ្រង</h1>
-            <p class="text-gray-500 text-sm">គ្រប់គ្រង និងកំណត់សិទ្ធិគ្រូ</p>
+            <p class="text-gray-500 text-sm">គ្រប់គ្រង និងកំណត់កាលវិភាគគ្រូ</p>
         </div>
 
         <!-- Stats -->
@@ -522,6 +548,14 @@
                     </div>
                 </div>
 
+                <!-- Conflict Warning -->
+                <div id="conflictWarning" class="hidden bg-red-50 border border-red-300 rounded-lg p-3 mb-4">
+                    <p class="text-red-600 text-sm flex items-center gap-2">
+                        <span>⚠️</span>
+                        <span id="conflictMessage">មានការជាន់ម៉ោងបង្រៀន! សូមពិនិត្យមើលថ្នាក់ដែលមានពណ៌ក្រហម។</span>
+                    </p>
+                </div>
+
                 <!-- Schedule Table -->
                 <div class="overflow-x-auto">
                     <table class="schedule-table" id="scheduleTable">
@@ -546,11 +580,15 @@
                 <!-- Legend -->
                 <div class="mt-4 flex flex-wrap gap-4 text-sm">
                     <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></span>
+                        <span class="legend-color has-class"></span>
                         មានថ្នាក់បង្រៀន
                     </span>
                     <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 bg-white border border-gray-300 rounded"></span>
+                        <span class="legend-color conflict"></span>
+                        ជាន់ម៉ោង (Conflict)
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="legend-color empty"></span>
                         គ្មានថ្នាក់បង្រៀន
                     </span>
                     <span class="text-gray-400">|</span>
@@ -635,13 +673,13 @@
         
         let currentTeacherId = null;
         let scheduleData = {};
+        let classList = [];
+        let allSchedules = [];
         const timeSlots = [
             '07:30-08:30', '08:30-09:30', '09:45-10:45', '10:45-11:45',
             '13:00-14:00', '14:00-15:00', '15:00-16:00'
         ];
         const dayNames = ['ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍', 'អាទិត្យ'];
-        const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const classes = ['12A', '12B', '12C', '11A', '11B', '10A', '10B', '9A', '9B'];
         const subjects = ['ICT', 'Math', 'Khmer', 'English', 'Science', 'Social'];
 
         // ============================================
@@ -729,6 +767,39 @@
         }
 
         // ============================================
+        // LOAD CLASSES FROM SUPABASE
+        // ============================================
+
+        async function loadClassesFromDatabase() {
+            try {
+                if (typeof SupabaseConfig !== 'undefined') {
+                    const classes = await SupabaseConfig.fetchAllClasses();
+                    if (classes && classes.length > 0) {
+                        classList = classes.map(c => c.class_name || c);
+                        console.log(`✅ Loaded ${classList.length} classes from database`);
+                        return;
+                    }
+                }
+                
+                // Fallback: try to get from users table
+                const users = userManagement.getUsers();
+                const classesFromUsers = [...new Set(users.filter(u => u.role === 'student').map(u => u.class).filter(Boolean))];
+                if (classesFromUsers.length > 0) {
+                    classList = classesFromUsers;
+                    console.log(`✅ Loaded ${classList.length} classes from users`);
+                    return;
+                }
+                
+                // Default fallback
+                classList = ['12A', '12B', '12C', '11A', '11B', '10A', '10B', '9A', '9B'];
+                console.log('⚠️ Using default classes list');
+            } catch (error) {
+                console.error('Error loading classes:', error);
+                classList = ['12A', '12B', '12C', '11A', '11B', '10A', '10B', '9A', '9B'];
+            }
+        }
+
+        // ============================================
         // PAGE LOAD
         // ============================================
 
@@ -769,6 +840,9 @@
             document.getElementById('roleBadge').textContent = 'Editor';
             document.getElementById('roleBadge').className = 'badge badge-editor';
 
+            // Load classes from database first
+            await loadClassesFromDatabase();
+
             console.log('✅ Editor dashboard loaded successfully');
 
             await updateStats();
@@ -789,7 +863,7 @@
                 const users = userManagement.getUsers();
                 document.getElementById('totalTeachers').textContent = users.filter(u => u.role === 'teacher').length;
                 document.getElementById('totalStudents').textContent = users.filter(u => u.role === 'student').length;
-                document.getElementById('totalClasses').textContent = classes.length;
+                document.getElementById('totalClasses').textContent = classList.length;
                 const notifications = await userManagement.getNotifications();
                 document.getElementById('totalNotifications').textContent = notifications.length;
             } catch (error) {
@@ -813,7 +887,6 @@
                 select.appendChild(option);
             });
             
-            // Auto-select first teacher if available
             if (teachers.length > 0) {
                 select.value = teachers[0].id;
                 loadTeacherSchedule();
@@ -824,7 +897,7 @@
         // LOAD TEACHER SCHEDULE
         // ============================================
 
-        function loadTeacherSchedule() {
+        async function loadTeacherSchedule() {
             const select = document.getElementById('teacherSelect');
             const teacherId = select.value;
             
@@ -855,8 +928,103 @@
                 scheduleData = {};
             }
             
+            // Load all schedules for conflict checking
+            await loadAllSchedules();
+            
             renderScheduleTable();
             updateTeacherInfo();
+            checkConflicts();
+        }
+
+        // ============================================
+        // LOAD ALL SCHEDULES FOR CONFLICT CHECKING
+        // ============================================
+
+        async function loadAllSchedules() {
+            allSchedules = [];
+            try {
+                // Get all teachers
+                const teachers = userManagement.getUsers().filter(u => u.role === 'teacher');
+                for (const teacher of teachers) {
+                    if (teacher.id === currentTeacherId) continue; // Skip current teacher
+                    const saved = localStorage.getItem(`teacher_schedule_${teacher.id}`);
+                    if (saved) {
+                        try {
+                            const data = JSON.parse(saved);
+                            for (const [key, value] of Object.entries(data)) {
+                                if (value) {
+                                    allSchedules.push({
+                                        teacher_id: teacher.id,
+                                        teacher_name: teacher.fullName,
+                                        key: key,
+                                        class: value
+                                    });
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                }
+                console.log(`📋 Loaded ${allSchedules.length} schedules for conflict checking`);
+            } catch (error) {
+                console.error('Error loading all schedules:', error);
+            }
+        }
+
+        // ============================================
+        // CHECK CONFLICTS
+        // ============================================
+
+        function checkConflicts() {
+            const conflicts = [];
+            const warningEl = document.getElementById('conflictWarning');
+            const messageEl = document.getElementById('conflictMessage');
+            
+            // Check each scheduled class for conflicts
+            for (const [key, className] of Object.entries(scheduleData)) {
+                if (!className) continue;
+                
+                const [day, row] = key.split('_').map(Number);
+                const timeSlot = timeSlots[row];
+                
+                // Check if other teachers have the same class at the same time
+                for (const schedule of allSchedules) {
+                    if (schedule.key === key && schedule.class === className) {
+                        conflicts.push({
+                            day: day,
+                            timeSlot: timeSlot,
+                            class: className,
+                            teacher: schedule.teacher_name,
+                            key: key
+                        });
+                    }
+                }
+            }
+            
+            // Highlight conflicting cells
+            document.querySelectorAll('.class-cell').forEach(cell => {
+                cell.classList.remove('conflict');
+            });
+            
+            for (const conflict of conflicts) {
+                const cell = document.querySelector(`.class-select[data-day="${conflict.day}"][data-row="${timeSlots.indexOf(conflict.timeSlot)}"]`);
+                if (cell) {
+                    const td = cell.closest('td');
+                    if (td) td.classList.add('conflict');
+                }
+            }
+            
+            // Show warning
+            if (conflicts.length > 0) {
+                warningEl.classList.remove('hidden');
+                const conflictMessages = conflicts.map(c => 
+                    `ថ្នាក់ ${c.class} ម៉ោង ${c.timeSlot} ថ្ងៃ${dayNames[c.day]} (ជាន់ជាមួយ ${c.teacher})`
+                );
+                messageEl.textContent = `⚠️ មានការជាន់ម៉ោងបង្រៀន! ${conflictMessages.join('; ')}`;
+            } else {
+                warningEl.classList.add('hidden');
+            }
+            
+            return conflicts;
         }
 
         // ============================================
@@ -878,10 +1046,10 @@
                     const hasClass = value !== '';
                     
                     html += `
-                        <td class="class-cell ${hasClass ? 'has-class' : ''}">
+                        <td class="class-cell ${hasClass ? 'has-class' : ''}" data-day="${day}" data-row="${rowIndex}">
                             <select class="class-select" data-day="${day}" data-row="${rowIndex}" onchange="updateScheduleCell(${day}, ${rowIndex}, this.value)">
                                 <option value="">-</option>
-                                ${classes.map(c => `<option value="${c}" ${value === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                ${classList.map(c => `<option value="${c}" ${value === c ? 'selected' : ''}>${c}</option>`).join('')}
                             </select>
                         </td>
                     `;
@@ -894,6 +1062,7 @@
             
             // Update total hours
             updateTeacherInfo();
+            checkConflicts();
         }
 
         // ============================================
@@ -909,7 +1078,7 @@
             }
             updateTeacherInfo();
             
-            // Highlight cell
+            // Update cell styling
             const cell = document.querySelector(`.class-select[data-day="${day}"][data-row="${row}"]`);
             if (cell) {
                 const td = cell.closest('td');
@@ -918,7 +1087,11 @@
                 } else {
                     td.classList.remove('has-class');
                 }
+                td.classList.remove('conflict');
             }
+            
+            // Check conflicts after update
+            checkConflicts();
         }
 
         // ============================================
@@ -926,11 +1099,9 @@
         // ============================================
 
         function updateTeacherInfo() {
-            // Count total hours
             const totalHours = Object.keys(scheduleData).length;
             document.getElementById('totalHours').textContent = totalHours;
             
-            // Get unique classes
             const uniqueClasses = [...new Set(Object.values(scheduleData))].filter(Boolean);
             document.getElementById('assignedClasses').textContent = uniqueClasses.length > 0 
                 ? uniqueClasses.join(', ') 
@@ -950,6 +1121,14 @@
                 return;
             }
             
+            // Check for conflicts before saving
+            const conflicts = checkConflicts();
+            if (conflicts.length > 0) {
+                if (!confirm(`មានការជាន់ម៉ោងបង្រៀន ${conflicts.length} កន្លែង!\n\nតើអ្នកនៅចង់រក្សាទុកមែនទេ?`)) {
+                    return;
+                }
+            }
+            
             btn.disabled = true;
             btn.textContent = '⏳ កំពុងរក្សាទុក...';
             status.className = 'mt-3 text-sm text-gray-500';
@@ -959,21 +1138,35 @@
                 // Save to localStorage
                 localStorage.setItem(`teacher_schedule_${currentTeacherId}`, JSON.stringify(scheduleData));
                 
-                // Also save to Supabase if available
+                // Save to Supabase if available
                 if (typeof SupabaseConfig !== 'undefined') {
                     const teacher = userManagement.getUsers().find(u => u.id === currentTeacherId);
-                    await SupabaseConfig.saveScheduleConfig({
+                    const entries = Object.entries(scheduleData).map(([key, value]) => {
+                        const [day, row] = key.split('_').map(Number);
+                        return {
+                            teacher_id: currentTeacherId,
+                            teacher_name: teacher ? teacher.fullName : '',
+                            class: value,
+                            day: day,
+                            time_slot: timeSlots[row],
+                            day_name: dayNames[day],
+                            subject: 'ICT' // Default subject, can be extended
+                        };
+                    }).filter(e => e.class);
+                    
+                    await SupabaseConfig.saveTeacherSchedule({
                         teacher_id: currentTeacherId,
-                        teacher_name: teacher ? teacher.fullName : '',
-                        schedule: scheduleData,
-                        total_hours: Object.keys(scheduleData).length,
-                        updated_at: new Date().toISOString()
+                        entries: entries
                     });
                 }
                 
                 showToast('✅ បានរក្សាទុកកាលវិភាគដោយជោគជ័យ!', 'success');
                 status.className = 'mt-3 text-sm text-green-600';
                 status.textContent = '✅ បានរក្សាទុកដោយជោគជ័យ!';
+                
+                // Reload all schedules for conflict checking
+                await loadAllSchedules();
+                checkConflicts();
                 
             } catch (error) {
                 console.error('Error saving schedule:', error);
@@ -1087,7 +1280,6 @@
         }
 
         function editTeacher(teacherId) {
-            // Open edit user modal (reuse from user-management)
             if (typeof userManagement.editUser === 'function') {
                 userManagement.editUser(teacherId);
             } else {
