@@ -10,7 +10,6 @@
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
         
-        /* Header Styles */
         .header {
             background: white;
             padding: 16px 24px;
@@ -26,14 +25,12 @@
         }
         .header .brand span { color: #4f46e5; }
         
-        /* Main Content */
         .main-content {
             padding: 24px;
             min-height: calc(100vh - 80px);
             background: #f7fafc;
         }
         
-        /* Cards */
         .card {
             background: white;
             border-radius: 12px;
@@ -46,23 +43,7 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.08);
         }
-        .card .icon {
-            font-size: 32px;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-        }
-        .card .icon.blue { background: #dbeafe; }
-        .card .icon.green { background: #dcfce7; }
-        .card .icon.purple { background: #ede9fe; }
-        .card .icon.orange { background: #fef3c7; }
-        .card .icon.red { background: #fee2e2; }
-        .card .icon.yellow { background: #fef9c3; }
         
-        /* Stats Card */
         .stats-card {
             background: white;
             border-radius: 12px;
@@ -95,40 +76,6 @@
             font-size: 24px;
         }
         
-        /* Quick Action */
-        .quick-action {
-            transition: all 0.2s;
-            border: 1px solid #f0f0f0;
-            cursor: pointer;
-        }
-        .quick-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        }
-        
-        /* Notification */
-        .notification-item {
-            transition: background 0.2s;
-            border: 1px solid #f0f0f0;
-        }
-        .notification-item:hover { background: #f8fafc; }
-        .notification-item.unread { border-left: 4px solid #4f46e5; background: #f0f4ff; }
-        
-        /* User Info */
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #4f46e5;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-        }
-        
-        /* Role Badge */
         .badge {
             padding: 4px 14px;
             border-radius: 20px;
@@ -136,11 +83,9 @@
             font-weight: 600;
         }
         .badge-editor { background: #dbeafe; color: #1e40af; }
-        .badge-admin { background: #fee2e2; color: #991b1b; }
         .badge-teacher { background: #dcfce7; color: #166534; }
         .badge-student { background: #dbeafe; color: #1e40af; }
         
-        /* Tab Content */
         .tab-content {
             display: none;
             animation: fadeIn 0.3s ease;
@@ -151,8 +96,98 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* Schedule Table */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .schedule-table th {
+            background: #f8fafc;
+            padding: 10px 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+        }
+        .schedule-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        .schedule-table .time-slot {
+            font-weight: 600;
+            color: #4b5563;
+            background: #f8fafc;
+        }
+        .schedule-table .class-cell {
+            min-width: 60px;
+        }
+        .schedule-table .class-cell select {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+        }
+        .schedule-table .class-cell select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            ring: 2px solid #4f46e5;
+        }
+        .schedule-table .class-cell.has-class {
+            background: #dbeafe;
+        }
+        .schedule-table .class-cell.has-class select {
+            border-color: #4f46e5;
+        }
+        .day-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .day-label.weekend {
+            color: #ef4444;
+        }
+        
+        /* Teacher Selection */
+        .teacher-select-card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+        }
+        .teacher-select-card select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .teacher-select-card select:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        
+        /* Subject Tags */
+        .subject-tag {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .subject-ict { background: #dbeafe; color: #1e40af; }
+        .subject-math { background: #fef3c7; color: #92400e; }
+        .subject-khmer { background: #dcfce7; color: #166534; }
+        .subject-english { background: #fce7f3; color: #9d174d; }
+        .subject-science { background: #e0e7ff; color: #3730a3; }
+        .subject-social { background: #fef3c7; color: #92400e; }
+        
         /* ============================================ */
-        /* LOGOUT MODAL - CUSTOM DESIGN */
+        /* LOGOUT MODAL */
         /* ============================================ */
         .logout-modal {
             display: none;
@@ -168,9 +203,7 @@
             justify-content: center;
             animation: fadeIn 0.3s ease;
         }
-        .logout-modal.show {
-            display: flex;
-        }
+        .logout-modal.show { display: flex; }
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -282,9 +315,6 @@
             background: #dc2626;
             transform: scale(1.02);
         }
-        .logout-modal-content .btn-group .btn-logout:active {
-            transform: scale(0.98);
-        }
         .logout-modal-content .close-btn {
             position: absolute;
             top: 16px;
@@ -300,40 +330,73 @@
             color: #374151;
         }
         
-        /* Responsive */
         @media (max-width: 640px) {
-            .header {
-                padding: 12px 16px;
-            }
-            .header .brand {
-                font-size: 16px;
-            }
-            .main-content {
-                padding: 16px;
-            }
-            .logout-modal-content {
-                padding: 28px 20px;
-                margin: 16px;
-            }
-            .logout-modal-content h3 {
-                font-size: 20px;
-            }
-            .logout-modal-content .btn-group {
-                flex-direction: column;
-            }
-            .logout-modal-content .btn-group button {
-                padding: 14px;
-            }
-            .stats-card .number {
-                font-size: 24px;
-            }
+            .header { padding: 12px 16px; }
+            .header .brand { font-size: 16px; }
+            .main-content { padding: 16px; }
+            .logout-modal-content { padding: 28px 20px; margin: 16px; }
+            .logout-modal-content h3 { font-size: 20px; }
+            .logout-modal-content .btn-group { flex-direction: column; }
+            .schedule-table { font-size: 12px; }
+            .schedule-table th, .schedule-table td { padding: 4px 6px; }
+            .schedule-table .class-cell select { font-size: 10px; padding: 2px 4px; }
         }
         
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        
+        .btn-save {
+            background: #4f46e5;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-save:hover {
+            background: #4338ca;
+            transform: scale(1.02);
+        }
+        .btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-reset {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-reset:hover {
+            background: #e5e7eb;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
+        }
+        .toast.success { background: #22c55e; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #4f46e5; }
     </style>
 </head>
 <body>
@@ -343,9 +406,7 @@
     <div class="logout-modal" id="logoutModal">
         <div class="logout-modal-content">
             <button class="close-btn" onclick="closeLogoutModal()">✕</button>
-            <div class="icon-wrapper">
-                <span class="icon">🚪</span>
-            </div>
+            <div class="icon-wrapper"><span class="icon">🚪</span></div>
             <h3>ចាកចេញពីប្រព័ន្ធ</h3>
             <p>តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?<br>អ្នកអាចចូលប្រើម្តងទៀតបានគ្រប់ពេល។</p>
             <div class="user-info" id="logoutUserInfo">
@@ -390,75 +451,144 @@
         <!-- Welcome Section -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">📝 ផ្ទាំងគ្រប់គ្រង</h1>
-            <p class="text-gray-500 text-sm">គ្រប់គ្រង និងកែសម្រួលប្រព័ន្ធ</p>
+            <p class="text-gray-500 text-sm">គ្រប់គ្រង និងកំណត់សិទ្ធិគ្រូ</p>
         </div>
 
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <div class="stats-card flex items-center justify-between">
-                <div>
-                    <p class="label">អ្នកប្រើប្រាស់សរុប</p>
-                    <p class="number text-indigo-600" id="totalUsers">0</p>
-                </div>
-                <div class="icon-bg bg-indigo-50 text-indigo-600">👥</div>
-            </div>
-            <div class="stats-card flex items-center justify-between">
-                <div>
-                    <p class="label">គ្រូ</p>
-                    <p class="number text-green-600" id="totalTeachers">0</p>
-                </div>
+                <div><p class="label">គ្រូសរុប</p><p class="number text-green-600" id="totalTeachers">0</p></div>
                 <div class="icon-bg bg-green-50 text-green-600">👨‍🏫</div>
             </div>
             <div class="stats-card flex items-center justify-between">
-                <div>
-                    <p class="label">សិស្ស</p>
-                    <p class="number text-blue-600" id="totalStudents">0</p>
-                </div>
+                <div><p class="label">សិស្សសរុប</p><p class="number text-blue-600" id="totalStudents">0</p></div>
                 <div class="icon-bg bg-blue-50 text-blue-600">👨‍🎓</div>
             </div>
             <div class="stats-card flex items-center justify-between">
-                <div>
-                    <p class="label">ការជូនដំណឹង</p>
-                    <p class="number text-yellow-600" id="totalNotifications">0</p>
-                </div>
+                <div><p class="label">ថ្នាក់សរុប</p><p class="number text-purple-600" id="totalClasses">0</p></div>
+                <div class="icon-bg bg-purple-50 text-purple-600">📚</div>
+            </div>
+            <div class="stats-card flex items-center justify-between">
+                <div><p class="label">ការជូនដំណឹង</p><p class="number text-yellow-600" id="totalNotifications">0</p></div>
                 <div class="icon-bg bg-yellow-50 text-yellow-600">🔔</div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="card mb-6">
-            <h3 class="font-bold text-gray-800 mb-4">⚡ សកម្មភាពរហ័ស</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <button onclick="switchTab('users')" class="quick-action p-4 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition text-center">
-                    <div class="text-3xl mb-1">👥</div>
-                    <p class="text-sm font-medium text-gray-700">គ្រប់គ្រងអ្នកប្រើប្រាស់</p>
-                </button>
-                <button onclick="switchTab('notifications')" class="quick-action p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition text-center">
-                    <div class="text-3xl mb-1">🔔</div>
-                    <p class="text-sm font-medium text-gray-700">ផ្ញើការជូនដំណឹង</p>
-                </button>
-                <a href="attendance.html" class="quick-action p-4 bg-green-50 rounded-xl hover:bg-green-100 transition text-center">
-                    <div class="text-3xl mb-1">📋</div>
-                    <p class="text-sm font-medium text-gray-700">ស្រង់វត្តមាន</p>
-                </a>
-                <a href="../index.html" class="quick-action p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition text-center">
-                    <div class="text-3xl mb-1">🏠</div>
-                    <p class="text-sm font-medium text-gray-700">ទំព័រដើម</p>
-                </a>
+        <!-- Tabs -->
+        <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
+            <button onclick="switchTab('schedule')" class="px-4 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600" id="tabSchedule">
+                📅 កំណត់កាលវិភាគគ្រូ
+            </button>
+            <button onclick="switchTab('teachers')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" id="tabTeachers">
+                👨‍🏫 គ្រប់គ្រងគ្រូ
+            </button>
+            <button onclick="switchTab('notifications')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" id="tabNotifications">
+                🔔 ការជូនដំណឹង
+            </button>
+        </div>
+
+        <!-- Tab: Schedule (Main) -->
+        <div id="tab-schedule" class="tab-content active">
+            <div class="card">
+                <div class="flex flex-wrap justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800">📅 កំណត់កាលវិភាគបង្រៀន</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-gray-500">ជ្រើសរើសគ្រូ៖</span>
+                        <select id="teacherSelect" class="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" onchange="loadTeacherSchedule()">
+                            <option value="">-- ជ្រើសរើសគ្រូ --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Teacher Info -->
+                <div id="teacherInfo" class="hidden bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">👨‍🏫</span>
+                            <div>
+                                <p class="font-medium text-gray-800" id="selectedTeacherName">-</p>
+                                <p class="text-sm text-gray-500" id="selectedTeacherEmail">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-500">ម៉ោងបង្រៀនក្នុងសប្តាហ៍៖</span>
+                            <span class="font-bold text-indigo-600 text-lg" id="totalHours">0</span>
+                            <span class="text-sm text-gray-500">ម៉ោង</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-500">ថ្នាក់បង្រៀន៖</span>
+                            <span class="font-medium text-gray-700" id="assignedClasses">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Table -->
+                <div class="overflow-x-auto">
+                    <table class="schedule-table" id="scheduleTable">
+                        <thead>
+                            <tr>
+                                <th class="w-24">ម៉ោង</th>
+                                <th class="day-label">ចន្ទ</th>
+                                <th class="day-label">អង្គារ</th>
+                                <th class="day-label">ពុធ</th>
+                                <th class="day-label">ព្រហស្បតិ៍</th>
+                                <th class="day-label">សុក្រ</th>
+                                <th class="day-label weekend">សៅរ៍</th>
+                                <th class="day-label weekend">អាទិត្យ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleBody">
+                            <!-- Generated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Legend -->
+                <div class="mt-4 flex flex-wrap gap-4 text-sm">
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></span>
+                        មានថ្នាក់បង្រៀន
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 bg-white border border-gray-300 rounded"></span>
+                        គ្មានថ្នាក់បង្រៀន
+                    </span>
+                    <span class="text-gray-400">|</span>
+                    <span class="text-gray-500">💡 ជ្រើសរើសថ្នាក់ពីបញ្ជីទម្លាក់ចុះ</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button onclick="saveSchedule()" class="btn-save" id="saveBtn">
+                        💾 រក្សាទុកកាលវិភាគ
+                    </button>
+                    <button onclick="resetSchedule()" class="btn-reset">
+                        🔄 កំណត់ឡើងវិញ
+                    </button>
+                    <button onclick="loadTeacherSchedule()" class="btn-reset">
+                        📥 ផ្ទុកឡើងវិញ
+                    </button>
+                </div>
+
+                <!-- Save Status -->
+                <div id="saveStatus" class="mt-3 text-sm hidden"></div>
             </div>
         </div>
 
-        <!-- Tab: Users -->
-        <div id="tab-users" class="tab-content">
-            <div id="userManagementContainer"></div>
+        <!-- Tab: Teachers -->
+        <div id="tab-teachers" class="tab-content">
+            <div class="card">
+                <h3 class="font-bold text-gray-800 mb-4">👨‍🏫 គ្រប់គ្រងគ្រូ</h3>
+                <div id="teacherManagementContainer">
+                    <p class="text-gray-500 text-center py-4">កំពុងផ្ទុក...</p>
+                </div>
+            </div>
         </div>
 
         <!-- Tab: Notifications -->
         <div id="tab-notifications" class="tab-content">
             <div class="card">
                 <h3 class="font-bold text-gray-800 mb-4">🔔 ការជូនដំណឹង</h3>
-                
-                <!-- Create Notification -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                     <h4 class="font-medium text-gray-700 mb-3">📝 បង្កើតការជូនដំណឹងថ្មី</h4>
                     <form id="notificationForm" onsubmit="handleCreateNotification(event)">
@@ -489,48 +619,8 @@
                         </div>
                     </form>
                 </div>
-
-                <!-- Notification List -->
                 <div id="notificationList">
-                    <div class="text-center py-8 text-gray-500">
-                        <p>📭 កំពុងផ្ទុក...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab: Settings -->
-        <div id="tab-settings" class="tab-content">
-            <div class="card">
-                <h3 class="font-bold text-gray-800 mb-4">⚙️ ការកំណត់ប្រព័ន្ធ</h3>
-                <div class="space-y-4 max-w-lg">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ឈ្មោះប្រព័ន្ធ</label>
-                        <input type="text" value="BUILCARD" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ឆ្នាំសិក្សា</label>
-                        <select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                            <option>2024-2025</option>
-                            <option selected>2025-2026</option>
-                            <option>2026-2027</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ភាសា</label>
-                        <select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                            <option>ភាសាខ្មែរ</option>
-                            <option>English</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ការតភ្ជាប់ Supabase</label>
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <span id="supabaseStatus" class="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">កំពុងពិនិត្យ...</span>
-                            <button onclick="checkSupabaseConnection()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">ពិនិត្យម្តងទៀត</button>
-                        </div>
-                    </div>
-                    <button class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">💾 រក្សាទុកការកំណត់</button>
+                    <div class="text-center py-8 text-gray-500"><p>📭 កំពុងផ្ទុក...</p></div>
                 </div>
             </div>
         </div>
@@ -540,26 +630,38 @@
     <script src="../js/user-management.js"></script>
     <script>
         // ============================================
-        // LOGOUT MODAL FUNCTIONS
+        // GLOBALS
+        // ============================================
+        
+        let currentTeacherId = null;
+        let scheduleData = {};
+        const timeSlots = [
+            '07:30-08:30', '08:30-09:30', '09:45-10:45', '10:45-11:45',
+            '13:00-14:00', '14:00-15:00', '15:00-16:00'
+        ];
+        const dayNames = ['ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍', 'អាទិត្យ'];
+        const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const classes = ['12A', '12B', '12C', '11A', '11B', '10A', '10B', '9A', '9B'];
+        const subjects = ['ICT', 'Math', 'Khmer', 'English', 'Science', 'Social'];
+
+        // ============================================
+        // LOGOUT MODAL
         // ============================================
         
         function showLogoutModal() {
             const modal = document.getElementById('logoutModal');
             const user = userManagement.getCurrentUser();
-            
             if (user) {
                 document.getElementById('logoutAvatar').textContent = user.fullName.charAt(0).toUpperCase();
                 document.getElementById('logoutUserName').textContent = user.fullName;
                 document.getElementById('logoutUserRole').textContent = '📝 Editor';
             }
-            
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
         }
 
         function closeLogoutModal() {
-            const modal = document.getElementById('logoutModal');
-            modal.classList.remove('show');
+            document.getElementById('logoutModal').classList.remove('show');
             document.body.style.overflow = '';
         }
 
@@ -571,19 +673,32 @@
             window.location.href = 'login.html';
         }
 
-        // Close modal on ESC key
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeLogoutModal();
-            }
+            if (e.key === 'Escape') closeLogoutModal();
+        });
+        document.getElementById('logoutModal').addEventListener('click', function(e) {
+            if (e.target === this) closeLogoutModal();
         });
 
-        // Close modal on overlay click
-        document.getElementById('logoutModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeLogoutModal();
-            }
-        });
+        // ============================================
+        // TOAST NOTIFICATION
+        // ============================================
+
+        function showToast(message, type = 'success') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
 
         // ============================================
         // TAB SWITCHING
@@ -591,11 +706,23 @@
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            const tab = document.getElementById(`tab-${tabId}`);
-            if (tab) tab.classList.add('active');
-
-            if (tabId === 'users') {
-                userManagement.renderUserManagement('userManagementContainer');
+            document.querySelectorAll('.tab-content').forEach(el => {
+                if (el.id === `tab-${tabId}`) el.classList.add('active');
+            });
+            
+            document.querySelectorAll('[id^="tab"]').forEach(el => {
+                el.classList.remove('border-indigo-600', 'text-indigo-600');
+                el.classList.add('text-gray-500');
+            });
+            
+            const tabBtn = document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+            if (tabBtn) {
+                tabBtn.classList.add('border-indigo-600', 'text-indigo-600');
+                tabBtn.classList.remove('text-gray-500');
+            }
+            
+            if (tabId === 'teachers') {
+                renderTeacherManagement();
             } else if (tabId === 'notifications') {
                 renderNotifications();
             }
@@ -614,7 +741,6 @@
                 return;
             }
 
-            // Wait for userManagement to initialize
             if (!userManagement.isInitialized) {
                 console.log('⏳ Waiting for userManagement to initialize...');
                 await new Promise((resolve) => {
@@ -627,66 +753,32 @@
                 });
             }
 
-            // Check if user is logged in
             if (!userManagement.isLoggedIn()) {
-                console.log('❌ User not logged in, redirecting to login...');
                 window.location.href = 'login.html';
                 return;
             }
 
             const user = userManagement.getCurrentUser();
-            console.log(`👤 User: ${user.username} (${user.role})`);
-            
-            // Check if user has editor role or admin
             if (user.role !== 'editor' && user.role !== 'admin') {
                 alert('អ្នកមិនមានសិទ្ធិចូលមើលទំព័រនេះទេ');
                 window.location.href = 'login.html';
                 return;
             }
 
-            // Display user info
             document.getElementById('userDisplay').textContent = `👤 ${user.fullName}`;
             document.getElementById('roleBadge').textContent = 'Editor';
             document.getElementById('roleBadge').className = 'badge badge-editor';
 
             console.log('✅ Editor dashboard loaded successfully');
 
-            // Load data
             await updateStats();
-            userManagement.renderUserManagement('userManagementContainer');
+            await loadTeachers();
             renderNotifications();
-            await checkSupabaseConnection();
-
-            // Show dashboard tab by default
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            renderTeacherManagement();
+            
+            // Show schedule tab by default
+            switchTab('schedule');
         });
-
-        // ============================================
-        // SUPABASE CONNECTION
-        // ============================================
-
-        async function checkSupabaseConnection() {
-            const statusEl = document.getElementById('supabaseStatus');
-            if (!statusEl) return;
-            try {
-                if (typeof SupabaseConfig !== 'undefined') {
-                    const connected = await SupabaseConfig.checkConnection();
-                    if (connected) {
-                        statusEl.className = 'px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium';
-                        statusEl.textContent = '✅ តភ្ជាប់ដោយជោគជ័យ';
-                    } else {
-                        statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
-                        statusEl.textContent = '❌ មិនអាចតភ្ជាប់';
-                    }
-                } else {
-                    statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
-                    statusEl.textContent = '❌ Config.js មិនត្រូវបានផ្ទុក';
-                }
-            } catch (error) {
-                statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
-                statusEl.textContent = '❌ កំហុសក្នុងការតភ្ជាប់';
-            }
-        }
 
         // ============================================
         // STATS
@@ -695,13 +787,311 @@
         async function updateStats() {
             try {
                 const users = userManagement.getUsers();
-                document.getElementById('totalUsers').textContent = users.length;
                 document.getElementById('totalTeachers').textContent = users.filter(u => u.role === 'teacher').length;
                 document.getElementById('totalStudents').textContent = users.filter(u => u.role === 'student').length;
+                document.getElementById('totalClasses').textContent = classes.length;
                 const notifications = await userManagement.getNotifications();
                 document.getElementById('totalNotifications').textContent = notifications.length;
             } catch (error) {
                 console.error('Error updating stats:', error);
+            }
+        }
+
+        // ============================================
+        // LOAD TEACHERS
+        // ============================================
+
+        function loadTeachers() {
+            const select = document.getElementById('teacherSelect');
+            const teachers = userManagement.getUsers().filter(u => u.role === 'teacher');
+            
+            select.innerHTML = '<option value="">-- ជ្រើសរើសគ្រូ --</option>';
+            teachers.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.id;
+                option.textContent = `${t.fullName} (${t.username})`;
+                select.appendChild(option);
+            });
+            
+            // Auto-select first teacher if available
+            if (teachers.length > 0) {
+                select.value = teachers[0].id;
+                loadTeacherSchedule();
+            }
+        }
+
+        // ============================================
+        // LOAD TEACHER SCHEDULE
+        // ============================================
+
+        function loadTeacherSchedule() {
+            const select = document.getElementById('teacherSelect');
+            const teacherId = select.value;
+            
+            if (!teacherId) {
+                document.getElementById('teacherInfo').classList.add('hidden');
+                document.getElementById('scheduleBody').innerHTML = '';
+                return;
+            }
+            
+            currentTeacherId = teacherId;
+            const teacher = userManagement.getUsers().find(u => u.id === teacherId);
+            
+            if (teacher) {
+                document.getElementById('teacherInfo').classList.remove('hidden');
+                document.getElementById('selectedTeacherName').textContent = teacher.fullName;
+                document.getElementById('selectedTeacherEmail').textContent = teacher.email || 'មិនមានអ៊ីមែល';
+            }
+            
+            // Load saved schedule from localStorage
+            const saved = localStorage.getItem(`teacher_schedule_${teacherId}`);
+            if (saved) {
+                try {
+                    scheduleData = JSON.parse(saved);
+                } catch (e) {
+                    scheduleData = {};
+                }
+            } else {
+                scheduleData = {};
+            }
+            
+            renderScheduleTable();
+            updateTeacherInfo();
+        }
+
+        // ============================================
+        // RENDER SCHEDULE TABLE
+        // ============================================
+
+        function renderScheduleTable() {
+            const tbody = document.getElementById('scheduleBody');
+            let html = '';
+            
+            timeSlots.forEach((time, rowIndex) => {
+                html += `<tr>`;
+                html += `<td class="time-slot text-sm">${time}</td>`;
+                
+                for (let day = 0; day < 7; day++) {
+                    const key = `${day}_${rowIndex}`;
+                    const value = scheduleData[key] || '';
+                    const isWeekend = day >= 5;
+                    const hasClass = value !== '';
+                    
+                    html += `
+                        <td class="class-cell ${hasClass ? 'has-class' : ''}">
+                            <select class="class-select" data-day="${day}" data-row="${rowIndex}" onchange="updateScheduleCell(${day}, ${rowIndex}, this.value)">
+                                <option value="">-</option>
+                                ${classes.map(c => `<option value="${c}" ${value === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </td>
+                    `;
+                }
+                
+                html += `</tr>`;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Update total hours
+            updateTeacherInfo();
+        }
+
+        // ============================================
+        // UPDATE SCHEDULE CELL
+        // ============================================
+
+        function updateScheduleCell(day, row, value) {
+            const key = `${day}_${row}`;
+            if (value) {
+                scheduleData[key] = value;
+            } else {
+                delete scheduleData[key];
+            }
+            updateTeacherInfo();
+            
+            // Highlight cell
+            const cell = document.querySelector(`.class-select[data-day="${day}"][data-row="${row}"]`);
+            if (cell) {
+                const td = cell.closest('td');
+                if (value) {
+                    td.classList.add('has-class');
+                } else {
+                    td.classList.remove('has-class');
+                }
+            }
+        }
+
+        // ============================================
+        // UPDATE TEACHER INFO
+        // ============================================
+
+        function updateTeacherInfo() {
+            // Count total hours
+            const totalHours = Object.keys(scheduleData).length;
+            document.getElementById('totalHours').textContent = totalHours;
+            
+            // Get unique classes
+            const uniqueClasses = [...new Set(Object.values(scheduleData))].filter(Boolean);
+            document.getElementById('assignedClasses').textContent = uniqueClasses.length > 0 
+                ? uniqueClasses.join(', ') 
+                : 'មិនទាន់មានថ្នាក់';
+        }
+
+        // ============================================
+        // SAVE SCHEDULE
+        // ============================================
+
+        async function saveSchedule() {
+            const btn = document.getElementById('saveBtn');
+            const status = document.getElementById('saveStatus');
+            
+            if (!currentTeacherId) {
+                showToast('សូមជ្រើសរើសគ្រូមុនពេលរក្សាទុក', 'error');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ កំពុងរក្សាទុក...';
+            status.className = 'mt-3 text-sm text-gray-500';
+            status.textContent = 'កំពុងរក្សាទុក...';
+            
+            try {
+                // Save to localStorage
+                localStorage.setItem(`teacher_schedule_${currentTeacherId}`, JSON.stringify(scheduleData));
+                
+                // Also save to Supabase if available
+                if (typeof SupabaseConfig !== 'undefined') {
+                    const teacher = userManagement.getUsers().find(u => u.id === currentTeacherId);
+                    await SupabaseConfig.saveScheduleConfig({
+                        teacher_id: currentTeacherId,
+                        teacher_name: teacher ? teacher.fullName : '',
+                        schedule: scheduleData,
+                        total_hours: Object.keys(scheduleData).length,
+                        updated_at: new Date().toISOString()
+                    });
+                }
+                
+                showToast('✅ បានរក្សាទុកកាលវិភាគដោយជោគជ័យ!', 'success');
+                status.className = 'mt-3 text-sm text-green-600';
+                status.textContent = '✅ បានរក្សាទុកដោយជោគជ័យ!';
+                
+            } catch (error) {
+                console.error('Error saving schedule:', error);
+                showToast('❌ មានបញ្ហាក្នុងការរក្សាទុក', 'error');
+                status.className = 'mt-3 text-sm text-red-600';
+                status.textContent = '❌ មានបញ្ហាក្នុងការរក្សាទុក';
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '💾 រក្សាទុកកាលវិភាគ';
+            
+            setTimeout(() => {
+                status.className = 'mt-3 text-sm hidden';
+            }, 3000);
+        }
+
+        // ============================================
+        // RESET SCHEDULE
+        // ============================================
+
+        function resetSchedule() {
+            if (!currentTeacherId) return;
+            if (!confirm('តើអ្នកប្រាកដជាចង់កំណត់កាលវិភាគឡើងវិញ?')) return;
+            
+            scheduleData = {};
+            localStorage.removeItem(`teacher_schedule_${currentTeacherId}`);
+            renderScheduleTable();
+            showToast('🔄 បានកំណត់កាលវិភាគឡើងវិញ', 'info');
+        }
+
+        // ============================================
+        // TEACHER MANAGEMENT (List)
+        // ============================================
+
+        function renderTeacherManagement() {
+            const container = document.getElementById('teacherManagementContainer');
+            const teachers = userManagement.getUsers().filter(u => u.role === 'teacher');
+            
+            if (teachers.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">👨‍🏫</div>
+                        <p>មិនមានគ្រូក្នុងប្រព័ន្ធ</p>
+                        <p class="text-sm">សូមបង្កើតគ្រូថ្មី</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-3 py-2 text-left">ឈ្មោះ</th>
+                                <th class="px-3 py-2 text-left">អ៊ីមែល</th>
+                                <th class="px-3 py-2 text-center">ម៉ោង/សប្តាហ៍</th>
+                                <th class="px-3 py-2 text-left">ថ្នាក់បង្រៀន</th>
+                                <th class="px-3 py-2 text-center">សកម្មភាព</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            teachers.forEach(teacher => {
+                const schedule = localStorage.getItem(`teacher_schedule_${teacher.id}`);
+                let hours = 0;
+                let classesList = [];
+                
+                if (schedule) {
+                    try {
+                        const data = JSON.parse(schedule);
+                        hours = Object.keys(data).length;
+                        classesList = [...new Set(Object.values(data))].filter(Boolean);
+                    } catch (e) {}
+                }
+                
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-3 py-2 font-medium">${teacher.fullName}</td>
+                        <td class="px-3 py-2 text-gray-600">${teacher.email || 'N/A'}</td>
+                        <td class="px-3 py-2 text-center font-bold text-indigo-600">${hours}</td>
+                        <td class="px-3 py-2 text-gray-600">${classesList.length > 0 ? classesList.join(', ') : '-'}</td>
+                        <td class="px-3 py-2 text-center">
+                            <button onclick="editTeacherSchedule('${teacher.id}')" class="text-blue-600 hover:text-blue-800 text-sm mr-2">📅 កំណត់កាលវិភាគ</button>
+                            <button onclick="editTeacher('${teacher.id}')" class="text-indigo-600 hover:text-indigo-800 text-sm">✏️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // EDIT TEACHER FUNCTIONS
+        // ============================================
+
+        function editTeacherSchedule(teacherId) {
+            const select = document.getElementById('teacherSelect');
+            select.value = teacherId;
+            loadTeacherSchedule();
+            switchTab('schedule');
+            document.getElementById('tab-schedule').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function editTeacher(teacherId) {
+            // Open edit user modal (reuse from user-management)
+            if (typeof userManagement.editUser === 'function') {
+                userManagement.editUser(teacherId);
+            } else {
+                alert('មុខងារនេះកំពុងអភិវឌ្ឍន៍');
             }
         }
 
@@ -734,7 +1124,7 @@
             const audience = document.getElementById('notifAudience').value;
 
             if (!title || !message) {
-                alert('សូមបញ្ចូលចំណងជើង និងសារជូនដំណឹង');
+                showToast('សូមបញ្ចូលចំណងជើង និងសារជូនដំណឹង', 'error');
                 return;
             }
 
@@ -751,13 +1141,13 @@
 
             const result = userManagement.createNotification(title, message, type, userIds);
             if (result.success) {
-                alert('✅ បានផ្ញើការជូនដំណឹងដោយជោគជ័យ!');
+                showToast('✅ បានផ្ញើការជូនដំណឹងដោយជោគជ័យ!', 'success');
                 document.getElementById('notifTitle').value = '';
                 document.getElementById('notifMessage').value = '';
                 renderNotifications();
                 updateStats();
             } else {
-                alert('❌ ' + result.message);
+                showToast('❌ ' + result.message, 'error');
             }
         }
 
@@ -769,10 +1159,17 @@
         window.showLogoutModal = showLogoutModal;
         window.closeLogoutModal = closeLogoutModal;
         window.confirmLogout = confirmLogout;
-        window.handleCreateNotification = handleCreateNotification;
+        window.loadTeacherSchedule = loadTeacherSchedule;
+        window.updateScheduleCell = updateScheduleCell;
+        window.saveSchedule = saveSchedule;
+        window.resetSchedule = resetSchedule;
+        window.editTeacherSchedule = editTeacherSchedule;
+        window.editTeacher = editTeacher;
+        window.renderTeacherManagement = renderTeacherManagement;
         window.renderNotifications = renderNotifications;
+        window.handleCreateNotification = handleCreateNotification;
         window.updateStats = updateStats;
-        window.checkSupabaseConnection = checkSupabaseConnection;
+        window.loadTeachers = loadTeachers;
     </script>
 </body>
 </html>
