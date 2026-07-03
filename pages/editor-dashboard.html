@@ -767,17 +767,40 @@
         }
 
         // ============================================
-        // LOAD CLASSES FROM SUPABASE
+        // LOAD CLASSES FROM DATABASE - IMPROVED
         // ============================================
 
         async function loadClassesFromDatabase() {
             try {
+                console.log('🔄 Loading classes from database...');
+                
+                // Try to get from Supabase first
                 if (typeof SupabaseConfig !== 'undefined') {
+                    // Method 1: Use fetchAllClasses
                     const classes = await SupabaseConfig.fetchAllClasses();
                     if (classes && classes.length > 0) {
-                        classList = classes.map(c => c.class_name || c);
-                        console.log(`✅ Loaded ${classList.length} classes from database`);
+                        classList = classes;
+                        console.log(`✅ Loaded ${classList.length} classes from Supabase:`, classList);
+                        document.getElementById('totalClasses').textContent = classList.length;
                         return;
+                    }
+                    
+                    // Method 2: Direct query to students table
+                    const { data: studentData, error: studentError } = await SupabaseConfig.supabase
+                        .from('students')
+                        .select('class')
+                        .not('class', 'is', null)
+                        .neq('class', '')
+                        .order('class');
+
+                    if (!studentError && studentData && studentData.length > 0) {
+                        const classes = [...new Set(studentData.map(s => s.class).filter(Boolean))];
+                        if (classes.length > 0) {
+                            classList = classes;
+                            console.log(`✅ Loaded ${classList.length} classes from students table:`, classList);
+                            document.getElementById('totalClasses').textContent = classList.length;
+                            return;
+                        }
                     }
                 }
                 
@@ -786,18 +809,83 @@
                 const classesFromUsers = [...new Set(users.filter(u => u.role === 'student').map(u => u.class).filter(Boolean))];
                 if (classesFromUsers.length > 0) {
                     classList = classesFromUsers;
-                    console.log(`✅ Loaded ${classList.length} classes from users`);
+                    console.log(`✅ Loaded ${classList.length} classes from users:`, classList);
+                    document.getElementById('totalClasses').textContent = classList.length;
                     return;
                 }
                 
-                // Default fallback
-                classList = ['12A', '12B', '12C', '11A', '11B', '10A', '10B', '9A', '9B'];
-                console.log('⚠️ Using default classes list');
+                // Default fallback - complete list
+                classList = [
+                    '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
+                    '8A', '8B', '8C', '8D', '8E', '8F', '8G',
+                    '9A', '9B', '9C', '9D', '9E',
+                    '10A', '10B', '10C', '10D', '10E', '10F', '10G', '10H', '10I',
+                    '11A', '11B', '11C', '11D', '11E', '11F', '11G',
+                    '12A', '12B', '12C', '12D', '12E', '12F'
+                ];
+                console.log('⚠️ Using default classes list:', classList);
+                document.getElementById('totalClasses').textContent = classList.length;
+                
             } catch (error) {
                 console.error('Error loading classes:', error);
-                classList = ['12A', '12B', '12C', '11A', '11B', '10A', '10B', '9A', '9B'];
+                // Use default classes
+                classList = [
+                    '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
+                    '8A', '8B', '8C', '8D', '8E', '8F', '8G',
+                    '9A', '9B', '9C', '9D', '9E',
+                    '10A', '10B', '10C', '10D', '10E', '10F', '10G', '10H', '10I',
+                    '11A', '11B', '11C', '11D', '11E', '11F', '11G',
+                    '12A', '12B', '12C', '12D', '12E', '12F'
+                ];
+                document.getElementById('totalClasses').textContent = classList.length;
             }
         }
+
+        // ============================================
+        // DEBUG: CHECK CLASSES IN CONSOLE
+        // ============================================
+
+        async function debugClasses() {
+            console.log('🔍 Debugging classes...');
+            console.log('classList:', classList);
+            console.log('classList length:', classList.length);
+            
+            if (typeof SupabaseConfig !== 'undefined') {
+                try {
+                    // Check students table directly
+                    const { data, error } = await SupabaseConfig.supabase
+                        .from('students')
+                        .select('class')
+                        .not('class', 'is', null)
+                        .neq('class', '')
+                        .order('class');
+
+                    if (!error && data) {
+                        const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
+                        console.log('📋 Classes from students table:', classes);
+                        console.log('📊 Count:', classes.length);
+                    } else {
+                        console.error('Error fetching from students:', error);
+                    }
+                    
+                    // Use fetchAllClasses
+                    const classes = await SupabaseConfig.fetchAllClasses();
+                    console.log('📋 Classes from fetchAllClasses:', classes);
+                } catch (e) {
+                    console.error('Error:', e);
+                }
+            }
+            
+            // Check users
+            const users = userManagement.getUsers();
+            const students = users.filter(u => u.role === 'student');
+            const classesFromUsers = [...new Set(students.map(u => u.class).filter(Boolean))];
+            console.log('📋 Classes from users:', classesFromUsers);
+            console.log('👨‍🎓 Students count:', students.length);
+        }
+
+        // Make debug function available globally
+        window.debugClasses = debugClasses;
 
         // ============================================
         // PAGE LOAD
@@ -852,6 +940,12 @@
             
             // Show schedule tab by default
             switchTab('schedule');
+
+            // Debug classes after load
+            setTimeout(() => {
+                console.log('📋 Final classList:', classList);
+                console.log('📋 Class count:', classList.length);
+            }, 1000);
         });
 
         // ============================================
@@ -1150,7 +1244,7 @@
                             day: day,
                             time_slot: timeSlots[row],
                             day_name: dayNames[day],
-                            subject: 'ICT' // Default subject, can be extended
+                            subject: 'ICT'
                         };
                     }).filter(e => e.class);
                     
@@ -1362,6 +1456,8 @@
         window.handleCreateNotification = handleCreateNotification;
         window.updateStats = updateStats;
         window.loadTeachers = loadTeachers;
+        window.loadClassesFromDatabase = loadClassesFromDatabase;
+        window.debugClasses = debugClasses;
     </script>
 </body>
 </html>
