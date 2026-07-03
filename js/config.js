@@ -589,7 +589,7 @@ const SupabaseConfig = {
     },
 
     // ============================================
-    // STUDENT FUNCTIONS
+    // STUDENT FUNCTIONS - FIXED
     // ============================================
 
     async fetchStudentsByClass(classVal) {
@@ -602,13 +602,18 @@ const SupabaseConfig = {
                 throw new Error('Supabase client not initialized');
             }
 
+            console.log(`📋 Fetching students for class: ${classVal}`);
+            
             const { data, error } = await this.supabase
                 .from(this.tables.students)
                 .select('*')
                 .eq('class', classVal)
                 .order('name', { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching students:', error);
+                return [];
+            }
 
             if (data && data.length > 0) {
                 return data.map(s => ({
@@ -620,10 +625,17 @@ const SupabaseConfig = {
                     phone: s.phone || null,
                     parentName: s.parent_name || null,
                     parentPhone: s.parent_phone || null,
-                    address: s.address || null
+                    address: s.address || null,
+                    fatherName: s.father_name || null,
+                    fatherPhone: s.father_phone || null,
+                    fatherJob: s.father_job || null,
+                    motherName: s.mother_name || null,
+                    motherPhone: s.mother_phone || null,
+                    motherJob: s.mother_job || null
                 }));
             }
 
+            // If no students in students table, try from users table
             const { data: userData, error: userError } = await this.supabase
                 .from(this.tables.users)
                 .select('*')
@@ -632,7 +644,10 @@ const SupabaseConfig = {
                 .eq('status', 'active')
                 .order('full_name', { ascending: true });
 
-            if (userError) throw userError;
+            if (userError) {
+                console.error('Error fetching students from users:', userError);
+                return [];
+            }
 
             if (userData && userData.length > 0) {
                 return userData.map(s => ({
@@ -644,10 +659,17 @@ const SupabaseConfig = {
                     phone: s.phone || null,
                     parentName: s.parent_name || null,
                     parentPhone: s.parent_phone || null,
-                    address: s.address || null
+                    address: s.address || null,
+                    fatherName: null,
+                    fatherPhone: null,
+                    fatherJob: null,
+                    motherName: null,
+                    motherPhone: null,
+                    motherJob: null
                 }));
             }
 
+            console.log(`📭 No students found for class: ${classVal}`);
             return [];
         } catch (error) {
             console.error('❌ Error fetching students:', error);
@@ -665,32 +687,115 @@ const SupabaseConfig = {
                 throw new Error('Supabase client not initialized');
             }
 
+            console.log('📋 Fetching all classes from students table...');
+
+            // Get distinct classes from students table
             const { data, error } = await this.supabase
                 .from(this.tables.students)
                 .select('class')
-                .not('class', 'is', null);
+                .not('class', 'is', null)
+                .neq('class', '')
+                .order('class');
 
-            if (error) throw error;
-
-            const classes = [...new Set((data || []).map(s => s.class))].filter(Boolean);
-            
-            if (classes.length > 0) {
-                return classes.sort();
+            if (error) {
+                console.error('Error fetching classes from students:', error);
+                return this.getDefaultClasses();
             }
 
+            if (data && data.length > 0) {
+                const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
+                console.log(`✅ Found ${classes.length} classes from students table:`, classes);
+                
+                if (classes.length > 0) {
+                    return classes.sort();
+                }
+            }
+
+            // If no classes in students, try from users table
+            console.log('No classes found in students table, trying users table...');
             const { data: userData, error: userError } = await this.supabase
                 .from(this.tables.users)
                 .select('class')
                 .eq('role', 'student')
-                .not('class', 'is', null);
+                .not('class', 'is', null)
+                .neq('class', '')
+                .order('class');
 
-            if (userError) throw userError;
+            if (userError) {
+                console.error('Error fetching classes from users:', userError);
+                return this.getDefaultClasses();
+            }
 
-            const userClasses = [...new Set((userData || []).map(s => s.class))].filter(Boolean);
-            return userClasses.sort();
+            if (userData && userData.length > 0) {
+                const classes = [...new Set(userData.map(s => s.class).filter(Boolean))];
+                console.log(`✅ Found ${classes.length} classes from users table:`, classes);
+                if (classes.length > 0) {
+                    return classes.sort();
+                }
+            }
+
+            console.log('⚠️ No classes found in database, using default classes');
+            return this.getDefaultClasses();
+
         } catch (error) {
             console.error('❌ Error fetching classes:', error);
-            return ['12A', '12B', '12C', '11A', '11B', '10A', '10B'];
+            return this.getDefaultClasses();
+        }
+    },
+
+    getDefaultClasses() {
+        // Complete list of default classes
+        const defaultClasses = [
+            '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
+            '8A', '8B', '8C', '8D', '8E', '8F', '8G',
+            '9A', '9B', '9C', '9D', '9E',
+            '10A', '10B', '10C', '10D', '10E', '10F', '10G', '10H', '10I',
+            '11A', '11B', '11C', '11D', '11E', '11F', '11G',
+            '12A', '12B', '12C', '12D', '12E', '12F'
+        ];
+        console.log('⚠️ Using default classes list:', defaultClasses);
+        return defaultClasses;
+    },
+
+    // ============================================
+    // SCHEDULE FUNCTIONS
+    // ============================================
+
+    async saveTeacherSchedule(scheduleData) {
+        try {
+            if (!this.isInitialized) {
+                this.init();
+            }
+            
+            if (!this.supabase) {
+                throw new Error('Supabase client not initialized');
+            }
+
+            console.log(`📝 Saving teacher schedule for: ${scheduleData.teacher_id}`);
+
+            // Delete existing schedule for this teacher
+            await this.supabase
+                .from(this.tables.schedule)
+                .delete()
+                .eq('teacher_id', scheduleData.teacher_id);
+
+            // Insert new schedule
+            if (scheduleData.entries && scheduleData.entries.length > 0) {
+                const { error } = await this.supabase
+                    .from(this.tables.schedule)
+                    .insert(scheduleData.entries);
+
+                if (error) {
+                    console.error('Error saving schedule:', error);
+                    throw error;
+                }
+            }
+
+            console.log('✅ Teacher schedule saved successfully');
+            return { success: true };
+        } catch (error) {
+            console.error('❌ Error saving teacher schedule:', error);
+            return { success: false, error: error.message };
         }
     },
 
