@@ -5,65 +5,407 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>គ្រូ - BUILCARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
-        .main-content { padding: 24px; min-height: 100vh; background: #f7fafc; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .header { background: white; padding: 16px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
-        .nav-link { color: #4a5568; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
-        .nav-link:hover { background: #ebf4ff; }
-        .nav-link.active { background: #4f46e5; color: white; }
+        
+        /* Header Styles */
+        .header {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header .brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a202c;
+        }
+        .header .brand span { color: #4f46e5; }
+        
+        /* Main Content */
+        .main-content {
+            padding: 24px;
+            min-height: calc(100vh - 80px);
+            background: #f7fafc;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        .card .icon {
+            font-size: 32px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        .card .icon.blue { background: #dbeafe; }
+        .card .icon.green { background: #dcfce7; }
+        .card .icon.purple { background: #ede9fe; }
+        .card .icon.orange { background: #fef3c7; }
+        
+        /* Quick Action */
+        .quick-action {
+            transition: all 0.2s;
+            border: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .quick-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+        
+        /* Notification */
+        .notification-item {
+            transition: background 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+        .notification-item:hover { background: #f8fafc; }
+        .notification-item.unread { border-left: 4px solid #4f46e5; background: #f0f4ff; }
+        
+        /* User Info */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4f46e5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        /* Role Badge */
+        .badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-teacher { background: #dcfce7; color: #166534; }
+        .badge-admin { background: #fee2e2; color: #991b1b; }
+        .badge-student { background: #dbeafe; color: #1e40af; }
+        
+        /* ============================================ */
+        /* LOGOUT MODAL - CUSTOM DESIGN */
+        /* ============================================ */
+        .logout-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .logout-modal.show {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .logout-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 36px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .logout-modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
+        }
+        .logout-modal-content .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fee2e2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 40px;
+        }
+        .logout-modal-content .icon-wrapper .icon {
+            font-size: 40px;
+        }
+        .logout-modal-content h3 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        .logout-modal-content p {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .logout-modal-content .user-info {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logout-modal-content .user-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4f46e5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .logout-modal-content .user-info .details {
+            text-align: left;
+        }
+        .logout-modal-content .user-info .details .name {
+            font-weight: 600;
+            color: #1a202c;
+            font-size: 14px;
+        }
+        .logout-modal-content .user-info .details .role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .logout-modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+        .logout-modal-content .btn-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .logout-modal-content .btn-group .btn-cancel {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .logout-modal-content .btn-group .btn-cancel:hover {
+            background: #e5e7eb;
+        }
+        .logout-modal-content .btn-group .btn-logout {
+            background: #ef4444;
+            color: white;
+        }
+        .logout-modal-content .btn-group .btn-logout:hover {
+            background: #dc2626;
+            transform: scale(1.02);
+        }
+        .logout-modal-content .btn-group .btn-logout:active {
+            transform: scale(0.98);
+        }
+        .logout-modal-content .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .logout-modal-content .close-btn:hover {
+            color: #374151;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header {
+                padding: 12px 16px;
+            }
+            .header .brand {
+                font-size: 16px;
+            }
+            .main-content {
+                padding: 16px;
+            }
+            .logout-modal-content {
+                padding: 28px 20px;
+                margin: 16px;
+            }
+            .logout-modal-content h3 {
+                font-size: 20px;
+            }
+            .logout-modal-content .btn-group {
+                flex-direction: column;
+            }
+            .logout-modal-content .btn-group button {
+                padding: 14px;
+            }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="container mx-auto flex flex-wrap justify-between items-center">
-            <div class="flex items-center gap-4">
-                <a href="index.html" class="text-indigo-600 hover:text-indigo-800">🏠</a>
-                <h1 class="text-xl font-bold text-gray-800">📚 BUILCARD - គ្រូ</h1>
+    <!-- ============================================ -->
+    <!-- LOGOUT MODAL -->
+    <!-- ============================================ -->
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-modal-content">
+            <button class="close-btn" onclick="closeLogoutModal()">✕</button>
+            <div class="icon-wrapper">
+                <span class="icon">🚪</span>
             </div>
-            <div class="flex items-center gap-3">
-                <span id="userDisplay" class="text-sm text-gray-600"></span>
-                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">គ្រូ</span>
-                <button onclick="handleLogout()" class="text-red-600 hover:text-red-800 text-sm">ចាកចេញ</button>
+            <h3>ចាកចេញពីប្រព័ន្ធ</h3>
+            <p>តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?<br>អ្នកអាចចូលប្រើម្តងទៀតបានគ្រប់ពេល។</p>
+            <div class="user-info" id="logoutUserInfo">
+                <div class="avatar" id="logoutAvatar">A</div>
+                <div class="details">
+                    <div class="name" id="logoutUserName">Administrator</div>
+                    <div class="role" id="logoutUserRole">👨‍🏫 គ្រូ</div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="closeLogoutModal()">បោះបង់</button>
+                <button class="btn-logout" onclick="confirmLogout()">ចាកចេញ</button>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- ============================================ -->
+    <!-- HEADER -->
+    <!-- ============================================ -->
+    <div class="header">
+        <div class="container mx-auto flex flex-wrap justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="../index.html" class="text-indigo-600 hover:text-indigo-800 text-xl">🏠</a>
+                <span class="brand">📚 BUIL<span>CARD</span></span>
+                <span class="text-sm text-gray-400 hidden sm:inline">| គ្រូ</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="userDisplay" class="text-sm text-gray-600 hidden md:inline"></span>
+                <span id="roleBadge" class="badge badge-teacher">គ្រូ</span>
+                <button onclick="showLogoutModal()" class="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1">
+                    <span>ចាកចេញ</span>
+                    <span class="text-lg">🚪</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================================ -->
     <div class="main-content container mx-auto">
-        <!-- Quick Access -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <a href="attendance.html" class="card hover:shadow-lg transition flex items-center gap-4">
-                <div class="text-3xl">📋</div>
+        <!-- Welcome Section -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">👨‍🏫 ផ្ទាំងគ្រប់គ្រងគ្រូ</h1>
+            <p class="text-gray-500 text-sm">ស្វាគមន៍មកកាន់ប្រព័ន្ធគ្រប់គ្រងការសិក្សា</p>
+        </div>
+
+        <!-- Quick Access Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <a href="attendance.html" class="card flex items-center gap-4 no-underline">
+                <div class="icon blue">📋</div>
                 <div>
-                    <h3 class="font-bold text-gray-800">ស្រង់វត្តមាន</h3>
-                    <p class="text-sm text-gray-500">កំណត់វត្តមានសិស្ស</p>
+                    <h3 class="font-bold text-gray-800 text-sm">ស្រង់វត្តមាន</h3>
+                    <p class="text-xs text-gray-500">កំណត់វត្តមានសិស្ស</p>
                 </div>
             </a>
-            <a href="grades.html" class="card hover:shadow-lg transition flex items-center gap-4">
-                <div class="text-3xl">📝</div>
+            <a href="grades.html" class="card flex items-center gap-4 no-underline">
+                <div class="icon green">📝</div>
                 <div>
-                    <h3 class="font-bold text-gray-800">បញ្ជូលពិន្ទុ</h3>
-                    <p class="text-sm text-gray-500">បញ្ជូលពិន្ទុសិស្ស</p>
+                    <h3 class="font-bold text-gray-800 text-sm">បញ្ជូលពិន្ទុ</h3>
+                    <p class="text-xs text-gray-500">បញ្ជូលពិន្ទុសិស្ស</p>
                 </div>
             </a>
-            <a href="student-results.html" class="card hover:shadow-lg transition flex items-center gap-4">
-                <div class="text-3xl">📊</div>
+            <a href="student-results.html" class="card flex items-center gap-4 no-underline">
+                <div class="icon purple">📊</div>
                 <div>
-                    <h3 class="font-bold text-gray-800">លទ្ធផលសិស្ស</h3>
-                    <p class="text-sm text-gray-500">មើលលទ្ធផលសិស្ស</p>
+                    <h3 class="font-bold text-gray-800 text-sm">លទ្ធផលសិស្ស</h3>
+                    <p class="text-xs text-gray-500">មើលលទ្ធផលសិស្ស</p>
+                </div>
+            </a>
+            <a href="profile.html" class="card flex items-center gap-4 no-underline">
+                <div class="icon orange">👤</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-sm">ប្រវត្តិរូប</h3>
+                    <p class="text-xs text-gray-500">គ្រប់គ្រងព័ត៌មាន</p>
                 </div>
             </a>
         </div>
 
+        <!-- Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="card">
+                <p class="text-gray-500 text-sm">សិស្សសរុប</p>
+                <p class="text-2xl font-bold text-indigo-600" id="totalStudents">0</p>
+            </div>
+            <div class="card">
+                <p class="text-gray-500 text-sm">ថ្នាក់រៀន</p>
+                <p class="text-2xl font-bold text-green-600" id="totalClasses">0</p>
+            </div>
+            <div class="card">
+                <p class="text-gray-500 text-sm">មុខវិជ្ជា</p>
+                <p class="text-2xl font-bold text-blue-600" id="totalSubjects">0</p>
+            </div>
+        </div>
+
         <!-- Notifications -->
         <div class="card">
-            <h3 class="font-bold text-gray-800 mb-4">🔔 ការជូនដំណឹង</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800">🔔 ការជូនដំណឹង</h3>
+                <span class="text-xs text-gray-400" id="notificationCount">0</span>
+            </div>
             <div id="notificationContainer">
-                <p class="text-gray-500">កំពុងផ្ទុក...</p>
+                <p class="text-gray-500 text-center py-4">📭 មិនមានការជូនដំណឹង</p>
             </div>
         </div>
     </div>
@@ -71,56 +413,181 @@
     <script src="../js/config.js"></script>
     <script src="../js/user-management.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // ============================================
+        // LOGOUT MODAL FUNCTIONS
+        // ============================================
+        
+        function showLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            const user = userManagement.getCurrentUser();
+            
+            if (user) {
+                document.getElementById('logoutAvatar').textContent = user.fullName.charAt(0).toUpperCase();
+                document.getElementById('logoutUserName').textContent = user.fullName;
+                document.getElementById('logoutUserRole').textContent = '👨‍🏫 គ្រូ';
+            }
+            
+            modal.classList.add('show');
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function confirmLogout() {
+            userManagement.logout();
+            sessionStorage.removeItem('current_user');
+            localStorage.removeItem('current_user');
+            closeLogoutModal();
+            window.location.href = 'login.html';
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLogoutModal();
+            }
+        });
+
+        // Close modal on overlay click
+        document.getElementById('logoutModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLogoutModal();
+            }
+        });
+
+        // ============================================
+        // PAGE LOAD
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('📄 Teacher dashboard loading...');
+
+            if (typeof userManagement === 'undefined') {
+                console.error('❌ User management not loaded');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Wait for userManagement to initialize
+            if (!userManagement.isInitialized) {
+                console.log('⏳ Waiting for userManagement to initialize...');
+                await new Promise((resolve) => {
+                    const checkInterval = setInterval(() => {
+                        if (userManagement.isInitialized) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 200);
+                });
+            }
+
+            // Check if user is logged in
             if (!userManagement.isLoggedIn()) {
+                console.log('❌ User not logged in, redirecting to login...');
                 window.location.href = 'login.html';
                 return;
             }
 
             const user = userManagement.getCurrentUser();
-            if (user.role !== 'teacher') {
+            console.log(`👤 User: ${user.username} (${user.role})`);
+            
+            // Check if user has teacher role or admin
+            if (user.role !== 'teacher' && user.role !== 'admin') {
                 alert('អ្នកមិនមានសិទ្ធិចូលមើលទំព័រនេះទេ');
                 window.location.href = 'login.html';
                 return;
             }
 
+            // Display user info
             document.getElementById('userDisplay').textContent = `👤 ${user.fullName}`;
-            
-            // Render notifications
+            document.getElementById('roleBadge').textContent = 'គ្រូ';
+            document.getElementById('roleBadge').className = 'badge badge-teacher';
+
+            console.log('✅ Teacher dashboard loaded successfully');
+
+            // Load data
+            await updateStats();
             renderNotifications();
         });
 
+        // ============================================
+        // STATS
+        // ============================================
+
+        async function updateStats() {
+            try {
+                // Get students count from users with student role
+                const users = userManagement.getUsers();
+                const students = users.filter(u => u.role === 'student');
+                document.getElementById('totalStudents').textContent = students.length;
+                
+                // Get classes count (using students' classes)
+                const classes = [...new Set(students.map(s => s.class).filter(Boolean))];
+                document.getElementById('totalClasses').textContent = classes.length || 0;
+                
+                // Get subjects count (from config or hardcoded)
+                const subjects = ['ICT', 'Math', 'Khmer', 'English', 'Science', 'Social'];
+                document.getElementById('totalSubjects').textContent = subjects.length;
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        // ============================================
+        // NOTIFICATIONS
+        // ============================================
+
         function renderNotifications() {
             const container = document.getElementById('notificationContainer');
-            const notifications = userManagement.getNotifications();
-
-            if (notifications.length === 0) {
-                container.innerHTML = `<p class="text-gray-500">📭 មិនមានការជូនដំណឹងទេ</p>`;
-                return;
-            }
-
-            container.innerHTML = notifications.map(n => `
-                <div class="p-3 border-b last:border-0 ${n.readBy.includes(userManagement.currentUser?.id) ? 'opacity-70' : 'bg-indigo-50'}">
-                    <div class="flex justify-between">
-                        <h4 class="font-medium text-gray-800">${n.title}</h4>
-                        <span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">${n.message}</p>
-                    ${!n.readBy.includes(userManagement.currentUser?.id) ? `
-                        <button onclick="userManagement.markNotificationRead('${n.id}')" class="text-xs text-indigo-600 mt-1">
-                            អានរួច
-                        </button>
-                    ` : ''}
-                </div>
-            `).join('');
+            if (!container) return;
+            
+            userManagement.getNotifications().then(notifications => {
+                const countEl = document.getElementById('notificationCount');
+                
+                if (!notifications || notifications.length === 0) {
+                    container.innerHTML = `<p class="text-gray-500 text-center py-4">📭 មិនមានការជូនដំណឹង</p>`;
+                    if (countEl) countEl.textContent = '0';
+                    return;
+                }
+                
+                if (countEl) countEl.textContent = notifications.length;
+                
+                container.innerHTML = notifications.slice(0, 5).map(n => {
+                    const isUnread = !n.readBy || !n.readBy.split(',').includes(userManagement.currentUser?.id);
+                    return `
+                        <div class="notification-item p-3 rounded-lg ${isUnread ? 'unread' : ''} border-b last:border-0">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-medium text-gray-800 text-sm">${n.title}</h4>
+                                <span class="text-xs text-gray-400 whitespace-nowrap ml-2">${new Date(n.createdAt).toLocaleString()}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                            ${isUnread ? `
+                                <button onclick="userManagement.markNotificationRead('${n.id}')" class="text-xs text-indigo-600 hover:text-indigo-800 mt-1">
+                                    អានរួច
+                                </button>
+                            ` : `
+                                <span class="text-xs text-gray-400 mt-1 inline-block">✅ បានអាន</span>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+            });
         }
 
-        function handleLogout() {
-            if (confirm('តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?')) {
-                userManagement.logout();
-                window.location.href = 'login.html';
-            }
-        }
+        // ============================================
+        // MAKE FUNCTIONS GLOBAL
+        // ============================================
+
+        window.showLogoutModal = showLogoutModal;
+        window.closeLogoutModal = closeLogoutModal;
+        window.confirmLogout = confirmLogout;
+        window.renderNotifications = renderNotifications;
+        window.updateStats = updateStats;
     </script>
 </body>
 </html>
