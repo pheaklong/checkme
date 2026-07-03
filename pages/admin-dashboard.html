@@ -9,141 +9,475 @@
     <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
-        .sidebar {
-            background: #1a1a2e;
-            min-height: 100vh;
-            width: 250px;
+        
+        /* Header Styles */
+        .header {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header .brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a202c;
+        }
+        .header .brand span { color: #4f46e5; }
+        
+        /* Main Content */
+        .main-content {
+            padding: 24px;
+            min-height: calc(100vh - 80px);
+            background: #f7fafc;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        .card .icon {
+            font-size: 32px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        .card .icon.blue { background: #dbeafe; }
+        .card .icon.green { background: #dcfce7; }
+        .card .icon.purple { background: #ede9fe; }
+        .card .icon.orange { background: #fef3c7; }
+        .card .icon.red { background: #fee2e2; }
+        .card .icon.yellow { background: #fef9c3; }
+        
+        /* Stats Card */
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        .stats-card .number {
+            font-size: 30px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        .stats-card .label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .stats-card .icon-bg {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        /* Quick Action */
+        .quick-action {
+            transition: all 0.2s;
+            border: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .quick-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+        
+        /* Notification */
+        .notification-item {
+            transition: background 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+        .notification-item:hover { background: #f8fafc; }
+        .notification-item.unread { border-left: 4px solid #4f46e5; background: #f0f4ff; }
+        
+        /* User Info */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4f46e5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        /* Role Badge */
+        .badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-admin { background: #fee2e2; color: #991b1b; }
+        .badge-editor { background: #dbeafe; color: #1e40af; }
+        .badge-teacher { background: #dcfce7; color: #166534; }
+        .badge-student { background: #dbeafe; color: #1e40af; }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ============================================ */
+        /* LOGOUT MODAL - CUSTOM DESIGN */
+        /* ============================================ */
+        .logout-modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
-            padding: 20px 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .logout-modal.show {
+            display: flex;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .logout-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 36px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .logout-modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
+        }
+        .logout-modal-content .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fee2e2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 40px;
+        }
+        .logout-modal-content h3 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        .logout-modal-content p {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .logout-modal-content .user-info {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logout-modal-content .user-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4f46e5;
             color: white;
-            z-index: 100;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
         }
-        .sidebar .brand { text-align: center; padding: 16px 0 20px; font-size: 22px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
-        .sidebar .brand span { color: #4f46e5; }
-        .sidebar .nav-item {
-            display: flex; align-items: center; padding: 12px 24px; color: #a0aec0;
-            text-decoration: none; transition: all 0.3s; cursor: pointer;
-            border-left: 3px solid transparent; font-size: 14px;
+        .logout-modal-content .user-info .details {
+            text-align: left;
         }
-        .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .sidebar .nav-item.active { background: rgba(79,70,229,0.15); color: white; border-left-color: #4f46e5; }
-        .sidebar .nav-item .icon { margin-right: 12px; font-size: 18px; width: 24px; text-align: center; }
-        .sidebar .nav-item.logout-btn { margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; color: #fc8181; }
-        .sidebar .nav-item.logout-btn:hover { color: #f56565; background: rgba(252,129,129,0.08); }
-        .main-content { margin-left: 250px; padding: 24px; min-height: 100vh; background: #f7fafc; }
-        .stats-card { background: white; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); transition: transform 0.2s; border: 1px solid #f0f0f0; }
-        .stats-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        .stats-card .number { font-size: 30px; font-weight: bold; line-height: 1.2; }
-        .stats-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }
-        .stats-card .icon-bg { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .notification-item { transition: background 0.2s; border: 1px solid #f0f0f0; }
-        .notification-item:hover { background: #f8fafc; }
-        .menu-toggle { display: none; background: none; border: none; color: #4a5568; font-size: 24px; cursor: pointer; padding: 8px; }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 16px; }
-            .menu-toggle { display: block; }
-            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 99; }
-            .sidebar-overlay.active { display: block; }
-            .stats-card .number { font-size: 24px; }
+        .logout-modal-content .user-info .details .name {
+            font-weight: 600;
+            color: #1a202c;
+            font-size: 14px;
         }
-        .page-header { background: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-        .page-header h1 { font-size: 22px; font-weight: bold; color: #1a202c; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .badge { padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-admin { background: #fee2e2; color: #991b1b; }
-        .quick-action { transition: all 0.2s; border: 1px solid #f0f0f0; }
-        .quick-action:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .logout-modal-content .user-info .details .role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .logout-modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+        .logout-modal-content .btn-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .logout-modal-content .btn-group .btn-cancel {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .logout-modal-content .btn-group .btn-cancel:hover {
+            background: #e5e7eb;
+        }
+        .logout-modal-content .btn-group .btn-logout {
+            background: #ef4444;
+            color: white;
+        }
+        .logout-modal-content .btn-group .btn-logout:hover {
+            background: #dc2626;
+            transform: scale(1.02);
+        }
+        .logout-modal-content .btn-group .btn-logout:active {
+            transform: scale(0.98);
+        }
+        .logout-modal-content .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .logout-modal-content .close-btn:hover {
+            color: #374151;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header {
+                padding: 12px 16px;
+            }
+            .header .brand {
+                font-size: 16px;
+            }
+            .main-content {
+                padding: 16px;
+            }
+            .logout-modal-content {
+                padding: 28px 20px;
+                margin: 16px;
+            }
+            .logout-modal-content h3 {
+                font-size: 20px;
+            }
+            .logout-modal-content .btn-group {
+                flex-direction: column;
+            }
+            .logout-modal-content .btn-group button {
+                padding: 14px;
+            }
+            .stats-card .number {
+                font-size: 24px;
+            }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
     </style>
 </head>
 <body>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="brand">📚 BUIL<span>CARD</span></div>
-        <nav>
-            <a class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="icon">📊</span> ផ្ទាំងគ្រប់គ្រង</a>
-            <a class="nav-item" data-tab="users" onclick="switchTab('users')"><span class="icon">👥</span> គ្រប់គ្រងអ្នកប្រើប្រាស់</a>
-            <a class="nav-item" data-tab="notifications" onclick="switchTab('notifications')"><span class="icon">🔔</span> ការជូនដំណឹង</a>
-            <a class="nav-item" data-tab="settings" onclick="switchTab('settings')"><span class="icon">⚙️</span> ការកំណត់</a>
-            <a class="nav-item logout-btn" onclick="handleLogout()"><span class="icon">🚪</span> ចាកចេញ</a>
-        </nav>
+    <!-- ============================================ -->
+    <!-- LOGOUT MODAL -->
+    <!-- ============================================ -->
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-modal-content">
+            <button class="close-btn" onclick="closeLogoutModal()">✕</button>
+            <div class="icon-wrapper">
+                <span class="icon">🚪</span>
+            </div>
+            <h3>ចាកចេញពីប្រព័ន្ធ</h3>
+            <p>តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?<br>អ្នកអាចចូលប្រើម្តងទៀតបានគ្រប់ពេល។</p>
+            <div class="user-info" id="logoutUserInfo">
+                <div class="avatar" id="logoutAvatar">A</div>
+                <div class="details">
+                    <div class="name" id="logoutUserName">Administrator</div>
+                    <div class="role" id="logoutUserRole">👑 Admin</div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="closeLogoutModal()">បោះបង់</button>
+                <button class="btn-logout" onclick="confirmLogout()">ចាកចេញ</button>
+            </div>
+        </div>
     </div>
 
-    <div class="main-content">
-        <div class="page-header">
+    <!-- ============================================ -->
+    <!-- HEADER -->
+    <!-- ============================================ -->
+    <div class="header">
+        <div class="container mx-auto flex flex-wrap justify-between items-center">
             <div class="flex items-center gap-3">
-                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-                <h1 id="pageTitle">📊 ផ្ទាំងគ្រប់គ្រង</h1>
+                <a href="../index.html" class="text-indigo-600 hover:text-indigo-800 text-xl">🏠</a>
+                <span class="brand">📚 BUIL<span>CARD</span></span>
+                <span class="text-sm text-gray-400 hidden sm:inline">| Admin</span>
             </div>
-            <div class="user-info">
-                <span id="userDisplay" class="text-sm text-gray-600"></span>
+            <div class="flex items-center gap-3">
+                <span id="userDisplay" class="text-sm text-gray-600 hidden md:inline"></span>
                 <span id="roleBadge" class="badge badge-admin">Admin</span>
+                <button onclick="showLogoutModal()" class="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1">
+                    <span>ចាកចេញ</span>
+                    <span class="text-lg">🚪</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================================ -->
+    <div class="main-content container mx-auto">
+        <!-- Welcome Section -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">👑 ផ្ទាំងគ្រប់គ្រង</h1>
+            <p class="text-gray-500 text-sm">គ្រប់គ្រងប្រព័ន្ធទាំងមូល</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <div class="stats-card flex items-center justify-between">
+                <div>
+                    <p class="label">អ្នកប្រើប្រាស់សរុប</p>
+                    <p class="number text-indigo-600" id="totalUsers">0</p>
+                </div>
+                <div class="icon-bg bg-indigo-50 text-indigo-600">👥</div>
+            </div>
+            <div class="stats-card flex items-center justify-between">
+                <div>
+                    <p class="label">គ្រូ</p>
+                    <p class="number text-green-600" id="totalTeachers">0</p>
+                </div>
+                <div class="icon-bg bg-green-50 text-green-600">👨‍🏫</div>
+            </div>
+            <div class="stats-card flex items-center justify-between">
+                <div>
+                    <p class="label">សិស្ស</p>
+                    <p class="number text-blue-600" id="totalStudents">0</p>
+                </div>
+                <div class="icon-bg bg-blue-50 text-blue-600">👨‍🎓</div>
+            </div>
+            <div class="stats-card flex items-center justify-between">
+                <div>
+                    <p class="label">ការជូនដំណឹង</p>
+                    <p class="number text-yellow-600" id="totalNotifications">0</p>
+                </div>
+                <div class="icon-bg bg-yellow-50 text-yellow-600">🔔</div>
             </div>
         </div>
 
-        <div id="tab-dashboard" class="tab-content active">
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-                <div class="stats-card flex items-center justify-between">
-                    <div><p class="label">អ្នកប្រើប្រាស់សរុប</p><p class="number text-indigo-600" id="totalUsers">0</p></div>
-                    <div class="icon-bg bg-indigo-50 text-indigo-600">👥</div>
-                </div>
-                <div class="stats-card flex items-center justify-between">
-                    <div><p class="label">គ្រូ</p><p class="number text-green-600" id="totalTeachers">0</p></div>
-                    <div class="icon-bg bg-green-50 text-green-600">👨‍🏫</div>
-                </div>
-                <div class="stats-card flex items-center justify-between">
-                    <div><p class="label">សិស្ស</p><p class="number text-blue-600" id="totalStudents">0</p></div>
-                    <div class="icon-bg bg-blue-50 text-blue-600">👨‍🎓</div>
-                </div>
-                <div class="stats-card flex items-center justify-between">
-                    <div><p class="label">ការជូនដំណឹង</p><p class="number text-yellow-600" id="totalNotifications">0</p></div>
-                    <div class="icon-bg bg-yellow-50 text-yellow-600">🔔</div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <h3 class="font-bold text-gray-800 mb-4">⚡ សកម្មភាពរហ័ស</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <button onclick="switchTab('users')" class="quick-action p-4 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition text-center">
-                        <div class="text-3xl mb-1">➕</div><p class="text-sm font-medium text-gray-700">បង្កើតអ្នកប្រើប្រាស់</p>
-                    </button>
-                    <button onclick="switchTab('notifications')" class="quick-action p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition text-center">
-                        <div class="text-3xl mb-1">🔔</div><p class="text-sm font-medium text-gray-700">ផ្ញើការជូនដំណឹង</p>
-                    </button>
-                    <a href="attendance.html" class="quick-action p-4 bg-green-50 rounded-xl hover:bg-green-100 transition text-center">
-                        <div class="text-3xl mb-1">📋</div><p class="text-sm font-medium text-gray-700">ស្រង់វត្តមាន</p>
-                    </a>
-                    <a href="../index.html" class="quick-action p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition text-center">
-                        <div class="text-3xl mb-1">🏠</div><p class="text-sm font-medium text-gray-700">ទំព័រដើម</p>
-                    </a>
-                </div>
+        <!-- Quick Actions -->
+        <div class="card mb-6">
+            <h3 class="font-bold text-gray-800 mb-4">⚡ សកម្មភាពរហ័ស</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <button onclick="switchTab('users')" class="quick-action p-4 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition text-center">
+                    <div class="text-3xl mb-1">➕</div>
+                    <p class="text-sm font-medium text-gray-700">បង្កើតអ្នកប្រើប្រាស់</p>
+                </button>
+                <button onclick="switchTab('notifications')" class="quick-action p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition text-center">
+                    <div class="text-3xl mb-1">🔔</div>
+                    <p class="text-sm font-medium text-gray-700">ផ្ញើការជូនដំណឹង</p>
+                </button>
+                <a href="attendance.html" class="quick-action p-4 bg-green-50 rounded-xl hover:bg-green-100 transition text-center">
+                    <div class="text-3xl mb-1">📋</div>
+                    <p class="text-sm font-medium text-gray-700">ស្រង់វត្តមាន</p>
+                </a>
+                <a href="../index.html" class="quick-action p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition text-center">
+                    <div class="text-3xl mb-1">🏠</div>
+                    <p class="text-sm font-medium text-gray-700">ទំព័រដើម</p>
+                </a>
             </div>
         </div>
 
-        <div id="tab-users" class="tab-content"><div id="userManagementContainer"></div></div>
+        <!-- Tab: Users -->
+        <div id="tab-users" class="tab-content">
+            <div id="userManagementContainer"></div>
+        </div>
 
+        <!-- Tab: Notifications -->
         <div id="tab-notifications" class="tab-content">
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="card">
                 <h3 class="font-bold text-gray-800 mb-4">🔔 ការជូនដំណឹង</h3>
+                
+                <!-- Create Notification -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                     <h4 class="font-medium text-gray-700 mb-3">📝 បង្កើតការជូនដំណឹងថ្មី</h4>
                     <form id="notificationForm" onsubmit="handleCreateNotification(event)">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div><input type="text" id="notifTitle" placeholder="ចំណងជើង" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" required></div>
-                            <div><select id="notifType" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                <option value="info">📘 ព័ត៌មាន</option><option value="success">✅ ជោគជ័យ</option>
-                                <option value="warning">⚠️ ការព្រមាន</option><option value="error">❌ កំហុស</option>
-                            </select></div>
+                            <div>
+                                <input type="text" id="notifTitle" placeholder="ចំណងជើង" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" required>
+                            </div>
+                            <div>
+                                <select id="notifType" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                    <option value="info">📘 ព័ត៌មាន</option>
+                                    <option value="success">✅ ជោគជ័យ</option>
+                                    <option value="warning">⚠️ ការព្រមាន</option>
+                                    <option value="error">❌ កំហុស</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="mt-3"><textarea id="notifMessage" placeholder="សារជូនដំណឹង..." class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" rows="2" required></textarea></div>
+                        <div class="mt-3">
+                            <textarea id="notifMessage" placeholder="សារជូនដំណឹង..." class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" rows="2" required></textarea>
+                        </div>
                         <div class="mt-3 flex flex-wrap gap-3">
                             <select id="notifAudience" class="border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
                                 <option value="all">👥 ទាំងអស់គ្នា</option>
@@ -155,18 +489,42 @@
                         </div>
                     </form>
                 </div>
-                <div id="notificationList"><div class="text-center py-8 text-gray-500"><p>📭 កំពុងផ្ទុក...</p></div></div>
+
+                <!-- Notification List -->
+                <div id="notificationList">
+                    <div class="text-center py-8 text-gray-500">
+                        <p>📭 កំពុងផ្ទុក...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Tab: Settings -->
         <div id="tab-settings" class="tab-content">
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="card">
                 <h3 class="font-bold text-gray-800 mb-4">⚙️ ការកំណត់ប្រព័ន្ធ</h3>
                 <div class="space-y-4 max-w-lg">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ឈ្មោះប្រព័ន្ធ</label><input type="text" value="BUILCARD" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ឆ្នាំសិក្សា</label><select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"><option>2024-2025</option><option selected>2025-2026</option></select></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ភាសា</label><select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"><option>ភាសាខ្មែរ</option><option>English</option></select></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ការតភ្ជាប់ Supabase</label>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ឈ្មោះប្រព័ន្ធ</label>
+                        <input type="text" value="BUILCARD" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ឆ្នាំសិក្សា</label>
+                        <select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                            <option>2024-2025</option>
+                            <option selected>2025-2026</option>
+                            <option>2026-2027</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ភាសា</label>
+                        <select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                            <option>ភាសាខ្មែរ</option>
+                            <option>English</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ការតភ្ជាប់ Supabase</label>
                         <div class="flex items-center gap-3 flex-wrap">
                             <span id="supabaseStatus" class="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">កំពុងពិនិត្យ...</span>
                             <button onclick="checkSupabaseConnection()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">ពិនិត្យម្តងទៀត</button>
@@ -182,7 +540,69 @@
     <script src="../js/user-management.js"></script>
     <script>
         // ============================================
-        // PAGE LOAD - CHECK SESSION
+        // LOGOUT MODAL FUNCTIONS
+        // ============================================
+        
+        function showLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            const user = userManagement.getCurrentUser();
+            
+            if (user) {
+                document.getElementById('logoutAvatar').textContent = user.fullName.charAt(0).toUpperCase();
+                document.getElementById('logoutUserName').textContent = user.fullName;
+                document.getElementById('logoutUserRole').textContent = '👑 Admin';
+            }
+            
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function confirmLogout() {
+            userManagement.logout();
+            sessionStorage.removeItem('current_user');
+            localStorage.removeItem('current_user');
+            closeLogoutModal();
+            window.location.href = 'login.html';
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLogoutModal();
+            }
+        });
+
+        // Close modal on overlay click
+        document.getElementById('logoutModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLogoutModal();
+            }
+        });
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const tab = document.getElementById(`tab-${tabId}`);
+            if (tab) tab.classList.add('active');
+
+            if (tabId === 'users') {
+                userManagement.renderUserManagement('userManagementContainer');
+            } else if (tabId === 'notifications') {
+                renderNotifications();
+            }
+        }
+
+        // ============================================
+        // PAGE LOAD
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async function() {
@@ -236,46 +656,10 @@
             userManagement.renderUserManagement('userManagementContainer');
             renderNotifications();
             await checkSupabaseConnection();
-        });
 
-        // ============================================
-        // TOGGLE SIDEBAR
-        // ============================================
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-        }
-
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                document.getElementById('sidebar').classList.remove('open');
-                document.getElementById('sidebarOverlay').classList.remove('active');
-            }
-        });
-
-        // ============================================
-        // TAB SWITCHING
-        // ============================================
-
-        function switchTab(tabId) {
+            // Show dashboard tab by default
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            const tab = document.getElementById(`tab-${tabId}`);
-            if (tab) tab.classList.add('active');
-
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active');
-                if (el.dataset.tab === tabId) el.classList.add('active');
-            });
-
-            const titles = { 'dashboard': '📊 ផ្ទាំងគ្រប់គ្រង', 'users': '👥 គ្រប់គ្រងអ្នកប្រើប្រាស់', 'notifications': '🔔 ការជូនដំណឹង', 'settings': '⚙️ ការកំណត់' };
-            document.getElementById('pageTitle').textContent = titles[tabId] || '📊 ផ្ទាំងគ្រប់គ្រង';
-
-            if (tabId === 'users') userManagement.renderUserManagement('userManagementContainer');
-            else if (tabId === 'notifications') renderNotifications();
-
-            if (window.innerWidth <= 768) toggleSidebar();
-        }
+        });
 
         // ============================================
         // SUPABASE CONNECTION
@@ -316,7 +700,9 @@
                 document.getElementById('totalStudents').textContent = users.filter(u => u.role === 'student').length;
                 const notifications = await userManagement.getNotifications();
                 document.getElementById('totalNotifications').textContent = notifications.length;
-            } catch (error) { console.error('Error updating stats:', error); }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
         }
 
         // ============================================
@@ -347,7 +733,10 @@
             const type = document.getElementById('notifType').value;
             const audience = document.getElementById('notifAudience').value;
 
-            if (!title || !message) { alert('សូមបញ្ចូលចំណងជើង និងសារជូនដំណឹង'); return; }
+            if (!title || !message) {
+                alert('សូមបញ្ចូលចំណងជើង និងសារជូនដំណឹង');
+                return;
+            }
 
             let userIds = null;
             if (audience !== 'all') {
@@ -367,20 +756,8 @@
                 document.getElementById('notifMessage').value = '';
                 renderNotifications();
                 updateStats();
-            } else { alert('❌ ' + result.message); }
-        }
-
-        // ============================================
-        // LOGOUT
-        // ============================================
-
-        function handleLogout() {
-            if (confirm('តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?')) {
-                userManagement.logout();
-                // Clear all storage
-                sessionStorage.removeItem('current_user');
-                localStorage.removeItem('current_user');
-                window.location.href = 'login.html';
+            } else {
+                alert('❌ ' + result.message);
             }
         }
 
@@ -389,8 +766,9 @@
         // ============================================
 
         window.switchTab = switchTab;
-        window.toggleSidebar = toggleSidebar;
-        window.handleLogout = handleLogout;
+        window.showLogoutModal = showLogoutModal;
+        window.closeLogoutModal = closeLogoutModal;
+        window.confirmLogout = confirmLogout;
         window.handleCreateNotification = handleCreateNotification;
         window.renderNotifications = renderNotifications;
         window.updateStats = updateStats;
