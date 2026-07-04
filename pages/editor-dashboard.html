@@ -767,125 +767,285 @@
         }
 
         // ============================================
-        // LOAD CLASSES FROM DATABASE - IMPROVED
+        // LOAD CLASSES FROM DATABASE - ALWAYS FROM DB
         // ============================================
 
         async function loadClassesFromDatabase() {
             try {
-                console.log('🔄 Loading classes from database...');
+                console.log('🔄 [START] Loading classes from database...');
                 
-                // Try to get from Supabase first
-                if (typeof SupabaseConfig !== 'undefined') {
-                    // Method 1: Use fetchAllClasses
-                    const classes = await SupabaseConfig.fetchAllClasses();
-                    if (classes && classes.length > 0) {
-                        classList = classes;
-                        console.log(`✅ Loaded ${classList.length} classes from Supabase:`, classList);
-                        document.getElementById('totalClasses').textContent = classList.length;
-                        return;
+                // Check if Supabase is available
+                if (typeof SupabaseConfig === 'undefined') {
+                    console.error('❌ SupabaseConfig is undefined!');
+                    // Try to get from localStorage cache
+                    const cached = localStorage.getItem('cached_classes');
+                    if (cached) {
+                        try {
+                            classList = JSON.parse(cached);
+                            if (classList && classList.length > 0) {
+                                console.log('✅ Loaded classes from cache:', classList);
+                                document.getElementById('totalClasses').textContent = classList.length;
+                                return;
+                            }
+                        } catch (e) {}
                     }
-                    
-                    // Method 2: Direct query to students table
-                    const { data: studentData, error: studentError } = await SupabaseConfig.supabase
-                        .from('students')
-                        .select('class')
-                        .not('class', 'is', null)
-                        .neq('class', '')
-                        .order('class');
-
-                    if (!studentError && studentData && studentData.length > 0) {
-                        const classes = [...new Set(studentData.map(s => s.class).filter(Boolean))];
-                        if (classes.length > 0) {
-                            classList = classes;
-                            console.log(`✅ Loaded ${classList.length} classes from students table:`, classList);
-                            document.getElementById('totalClasses').textContent = classList.length;
-                            return;
-                        }
-                    }
-                }
-                
-                // Fallback: try to get from users table
-                const users = userManagement.getUsers();
-                const classesFromUsers = [...new Set(users.filter(u => u.role === 'student').map(u => u.class).filter(Boolean))];
-                if (classesFromUsers.length > 0) {
-                    classList = classesFromUsers;
-                    console.log(`✅ Loaded ${classList.length} classes from users:`, classList);
+                    // Use default as last resort
+                    classList = getDefaultClassesList();
                     document.getElementById('totalClasses').textContent = classList.length;
                     return;
                 }
+
+                if (!SupabaseConfig.supabase) {
+                    console.error('❌ Supabase client not initialized!');
+                    const cached = localStorage.getItem('cached_classes');
+                    if (cached) {
+                        try {
+                            classList = JSON.parse(cached);
+                            if (classList && classList.length > 0) {
+                                console.log('✅ Loaded classes from cache:', classList);
+                                document.getElementById('totalClasses').textContent = classList.length;
+                                return;
+                            }
+                        } catch (e) {}
+                    }
+                    classList = getDefaultClassesList();
+                    document.getElementById('totalClasses').textContent = classList.length;
+                    return;
+                }
+
+                console.log('📡 [STEP 1] Querying students table for classes...');
                 
-                // Default fallback - complete list
-                classList = [
-                    '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
-                    '8A', '8B', '8C', '8D', '8E', '8F', '8G',
-                    '9A', '9B', '9C', '9D', '9E',
-                    '10A', '10B', '10C', '10D', '10E', '10F', '10G', '10H', '10I',
-                    '11A', '11B', '11C', '11D', '11E', '11F', '11G',
-                    '12A', '12B', '12C', '12D', '12E', '12F'
-                ];
-                console.log('⚠️ Using default classes list:', classList);
+                // DIRECT QUERY - Get all classes from students table
+                const { data, error } = await SupabaseConfig.supabase
+                    .from('students')
+                    .select('class')
+                    .not('class', 'is', null)
+                    .neq('class', '');
+
+                console.log('[DEBUG] Query result - data count:', data?.length || 0);
+                console.log('[DEBUG] Query error:', error);
+
+                if (error) {
+                    console.error('❌ Database error:', error);
+                    // Try to get from localStorage cache
+                    const cached = localStorage.getItem('cached_classes');
+                    if (cached) {
+                        try {
+                            classList = JSON.parse(cached);
+                            if (classList && classList.length > 0) {
+                                console.log('✅ Loaded classes from cache (after error):', classList);
+                                document.getElementById('totalClasses').textContent = classList.length;
+                                return;
+                            }
+                        } catch (e) {}
+                    }
+                    classList = getDefaultClassesList();
+                    document.getElementById('totalClasses').textContent = classList.length;
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    console.log('⚠️ No data in students table!');
+                    // Try users table
+                    console.log('📡 [STEP 2] Trying users table...');
+                    const { data: userData, error: userError } = await SupabaseConfig.supabase
+                        .from('users')
+                        .select('class')
+                        .eq('role', 'student')
+                        .not('class', 'is', null);
+
+                    console.log('[DEBUG] User data count:', userData?.length || 0);
+                    console.log('[DEBUG] User error:', userError);
+
+                    if (!userError && userData && userData.length > 0) {
+                        const classes = [...new Set(userData.map(s => s.class).filter(Boolean))];
+                        if (classes.length > 0) {
+                            classList = classes.sort();
+                            // Cache the result
+                            localStorage.setItem('cached_classes', JSON.stringify(classList));
+                            document.getElementById('totalClasses').textContent = classList.length;
+                            console.log(`✅ Loaded ${classList.length} classes from users table:`, classList);
+                            return;
+                        }
+                    }
+
+                    // Try to get from cache
+                    const cached = localStorage.getItem('cached_classes');
+                    if (cached) {
+                        try {
+                            classList = JSON.parse(cached);
+                            if (classList && classList.length > 0) {
+                                console.log('✅ Loaded classes from cache:', classList);
+                                document.getElementById('totalClasses').textContent = classList.length;
+                                return;
+                            }
+                        } catch (e) {}
+                    }
+
+                    classList = getDefaultClassesList();
+                    document.getElementById('totalClasses').textContent = classList.length;
+                    console.log('⚠️ Using default classes (no data in database)');
+                    return;
+                }
+
+                // Extract unique classes
+                const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
+                console.log(`✅ Found ${classes.length} classes from students table:`, classes);
+
+                if (classes.length === 0) {
+                    console.log('⚠️ No valid classes found in data');
+                    // Try cache
+                    const cached = localStorage.getItem('cached_classes');
+                    if (cached) {
+                        try {
+                            classList = JSON.parse(cached);
+                            if (classList && classList.length > 0) {
+                                console.log('✅ Loaded classes from cache:', classList);
+                                document.getElementById('totalClasses').textContent = classList.length;
+                                return;
+                            }
+                        } catch (e) {}
+                    }
+                    classList = getDefaultClassesList();
+                } else {
+                    classList = classes.sort();
+                    // Cache the result for future use
+                    localStorage.setItem('cached_classes', JSON.stringify(classList));
+                }
+
                 document.getElementById('totalClasses').textContent = classList.length;
-                
+                console.log(`✅ Final classList (${classList.length} classes):`, classList);
+
             } catch (error) {
-                console.error('Error loading classes:', error);
-                // Use default classes
-                classList = [
-                    '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
-                    '8A', '8B', '8C', '8D', '8E', '8F', '8G',
-                    '9A', '9B', '9C', '9D', '9E',
-                    '10A', '10B', '10C', '10D', '10E', '10F', '10G', '10H', '10I',
-                    '11A', '11B', '11C', '11D', '11E', '11F', '11G',
-                    '12A', '12B', '12C', '12D', '12E', '12F'
-                ];
+                console.error('❌ Error in loadClassesFromDatabase:', error);
+                // Try to get from cache
+                const cached = localStorage.getItem('cached_classes');
+                if (cached) {
+                    try {
+                        classList = JSON.parse(cached);
+                        if (classList && classList.length > 0) {
+                            console.log('✅ Loaded classes from cache (after error):', classList);
+                            document.getElementById('totalClasses').textContent = classList.length;
+                            return;
+                        }
+                    } catch (e) {}
+                }
+                classList = getDefaultClassesList();
                 document.getElementById('totalClasses').textContent = classList.length;
             }
         }
 
+        /**
+         * Get default classes list (fallback only)
+         */
+        function getDefaultClassesList() {
+            return [
+                '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
+                '8A', '8B', '8C', '8D', '8E', '8F', '8G',
+                '9A', '9B', '9C', '9D', '9E',
+                '10A', '10B', '10C', '10D', '10E', '10F', '10G', '10H', '10I',
+                '11A', '11B', '11C', '11D', '11E', '11F', '11G',
+                '12A', '12B', '12C', '12D', '12E', '12F'
+            ];
+        }
+
         // ============================================
-        // DEBUG: CHECK CLASSES IN CONSOLE
+        // DEBUG DATABASE
         // ============================================
 
-        async function debugClasses() {
-            console.log('🔍 Debugging classes...');
-            console.log('classList:', classList);
-            console.log('classList length:', classList.length);
+        async function debugDatabase() {
+            console.log('🔍 ===== DATABASE DEBUG =====');
             
-            if (typeof SupabaseConfig !== 'undefined') {
-                try {
-                    // Check students table directly
-                    const { data, error } = await SupabaseConfig.supabase
-                        .from('students')
-                        .select('class')
-                        .not('class', 'is', null)
-                        .neq('class', '')
-                        .order('class');
-
-                    if (!error && data) {
-                        const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
-                        console.log('📋 Classes from students table:', classes);
-                        console.log('📊 Count:', classes.length);
-                    } else {
-                        console.error('Error fetching from students:', error);
-                    }
-                    
-                    // Use fetchAllClasses
-                    const classes = await SupabaseConfig.fetchAllClasses();
-                    console.log('📋 Classes from fetchAllClasses:', classes);
-                } catch (e) {
-                    console.error('Error:', e);
-                }
+            if (typeof SupabaseConfig === 'undefined') {
+                console.error('❌ SupabaseConfig is undefined!');
+                return;
             }
-            
-            // Check users
-            const users = userManagement.getUsers();
-            const students = users.filter(u => u.role === 'student');
-            const classesFromUsers = [...new Set(students.map(u => u.class).filter(Boolean))];
-            console.log('📋 Classes from users:', classesFromUsers);
-            console.log('👨‍🎓 Students count:', students.length);
+
+            if (!SupabaseConfig.supabase) {
+                console.error('❌ Supabase client not initialized!');
+                return;
+            }
+
+            console.log('✅ Supabase client is available');
+
+            // 1. Check students table
+            console.log('📋 [1] Checking students table...');
+            try {
+                const { data, error, count } = await SupabaseConfig.supabase
+                    .from('students')
+                    .select('class', { count: 'exact' })
+                    .not('class', 'is', null)
+                    .neq('class', '');
+
+                console.log('📊 Students table - Total records:', count);
+                console.log('📊 Students table - Data:', data);
+
+                if (data && data.length > 0) {
+                    const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
+                    console.log('📊 Classes found:', classes);
+                    console.log('📊 Number of classes:', classes.length);
+                    
+                    // Count per class
+                    const countPerClass = {};
+                    data.forEach(s => {
+                        if (s.class) {
+                            countPerClass[s.class] = (countPerClass[s.class] || 0) + 1;
+                        }
+                    });
+                    console.log('📊 Students per class:', countPerClass);
+                    
+                    // Update classList with database data
+                    if (classes.length > 0) {
+                        classList = classes.sort();
+                        localStorage.setItem('cached_classes', JSON.stringify(classList));
+                        document.getElementById('totalClasses').textContent = classList.length;
+                        console.log('✅ Updated classList from database:', classList);
+                    }
+                } else {
+                    console.log('⚠️ No data in students table');
+                }
+            } catch (e) {
+                console.error('❌ Error checking students table:', e);
+            }
+
+            // 2. Check cache
+            console.log('📋 [2] Checking localStorage cache...');
+            const cached = localStorage.getItem('cached_classes');
+            if (cached) {
+                try {
+                    const classes = JSON.parse(cached);
+                    console.log('📊 Cached classes:', classes);
+                    console.log('📊 Cached classes count:', classes?.length || 0);
+                } catch (e) {
+                    console.error('Error parsing cache:', e);
+                }
+            } else {
+                console.log('⚠️ No cache found');
+            }
+
+            console.log('📋 Current classList:', classList);
+            console.log('📋 Current classList length:', classList.length);
+            console.log('🔍 ===== END DEBUG =====');
         }
 
         // Make debug function available globally
-        window.debugClasses = debugClasses;
+        window.debugDatabase = debugDatabase;
+
+        // ============================================
+        // FORCE RELOAD CLASSES FROM DATABASE
+        // ============================================
+
+        async function forceReloadClasses() {
+            console.log('🔄 Force reloading classes from database...');
+            // Clear cache to force fresh load
+            localStorage.removeItem('cached_classes');
+            await loadClassesFromDatabase();
+            renderScheduleTable();
+            console.log('✅ Current classList:', classList);
+            console.log('✅ Total classes:', classList.length);
+        }
+
+        window.forceReloadClasses = forceReloadClasses;
 
         // ============================================
         // PAGE LOAD
@@ -1128,6 +1288,13 @@
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleBody');
             let html = '';
+            
+            // Ensure classList has data
+            if (classList.length === 0) {
+                console.warn('⚠️ No classes available, using defaults');
+                classList = getDefaultClassesList();
+                document.getElementById('totalClasses').textContent = classList.length;
+            }
             
             timeSlots.forEach((time, rowIndex) => {
                 html += `<tr>`;
@@ -1457,7 +1624,8 @@
         window.updateStats = updateStats;
         window.loadTeachers = loadTeachers;
         window.loadClassesFromDatabase = loadClassesFromDatabase;
-        window.debugClasses = debugClasses;
+        window.debugDatabase = debugDatabase;
+        window.forceReloadClasses = forceReloadClasses;
     </script>
 </body>
 </html>
