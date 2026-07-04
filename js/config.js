@@ -589,7 +589,7 @@ const SupabaseConfig = {
     },
 
     // ============================================
-    // STUDENT FUNCTIONS - FIXED
+    // STUDENT FUNCTIONS - FETCH FROM DATABASE
     // ============================================
 
     async fetchStudentsByClass(classVal) {
@@ -677,6 +677,10 @@ const SupabaseConfig = {
         }
     },
 
+    /**
+     * Fetch all unique classes from students table
+     * This ensures we always get classes from database
+     */
     async fetchAllClasses() {
         try {
             if (!this.isInitialized) {
@@ -684,67 +688,121 @@ const SupabaseConfig = {
             }
             
             if (!this.supabase) {
-                throw new Error('Supabase client not initialized');
+                console.error('❌ Supabase client not initialized');
+                // Try to get from localStorage cache as fallback
+                const cached = localStorage.getItem('cached_classes');
+                if (cached) {
+                    try {
+                        const classes = JSON.parse(cached);
+                        if (classes && classes.length > 0) {
+                            console.log('📋 Using cached classes from localStorage:', classes);
+                            return classes;
+                        }
+                    } catch (e) {}
+                }
+                return this.getDefaultClasses();
             }
 
-            console.log('📋 Fetching all classes from students table...');
+            console.log('📋 [Supabase] Fetching all classes from students table...');
 
-            // Get distinct classes from students table
+            // Query to get distinct classes
             const { data, error } = await this.supabase
                 .from(this.tables.students)
                 .select('class')
                 .not('class', 'is', null)
-                .neq('class', '')
-                .order('class');
+                .neq('class', '');
 
             if (error) {
-                console.error('Error fetching classes from students:', error);
+                console.error('❌ Error fetching classes:', error);
+                // Try to get from localStorage cache
+                const cached = localStorage.getItem('cached_classes');
+                if (cached) {
+                    try {
+                        const classes = JSON.parse(cached);
+                        if (classes && classes.length > 0) {
+                            console.log('📋 Using cached classes from localStorage:', classes);
+                            return classes;
+                        }
+                    } catch (e) {}
+                }
                 return this.getDefaultClasses();
             }
 
-            if (data && data.length > 0) {
-                const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
-                console.log(`✅ Found ${classes.length} classes from students table:`, classes);
-                
-                if (classes.length > 0) {
-                    return classes.sort();
-                }
+            if (!data || data.length === 0) {
+                console.log('⚠️ No classes found in students table');
+                // Try from users table
+                return await this.fetchClassesFromUsers();
             }
 
-            // If no classes in students, try from users table
-            console.log('No classes found in students table, trying users table...');
-            const { data: userData, error: userError } = await this.supabase
-                .from(this.tables.users)
-                .select('class')
-                .eq('role', 'student')
-                .not('class', 'is', null)
-                .neq('class', '')
-                .order('class');
+            // Extract unique classes
+            const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
+            console.log(`✅ Found ${classes.length} classes from students table:`, classes);
 
-            if (userError) {
-                console.error('Error fetching classes from users:', userError);
-                return this.getDefaultClasses();
+            // Cache the result
+            if (classes.length > 0) {
+                localStorage.setItem('cached_classes', JSON.stringify(classes));
             }
 
-            if (userData && userData.length > 0) {
-                const classes = [...new Set(userData.map(s => s.class).filter(Boolean))];
-                console.log(`✅ Found ${classes.length} classes from users table:`, classes);
-                if (classes.length > 0) {
-                    return classes.sort();
-                }
-            }
-
-            console.log('⚠️ No classes found in database, using default classes');
-            return this.getDefaultClasses();
+            return classes.sort();
 
         } catch (error) {
-            console.error('❌ Error fetching classes:', error);
+            console.error('❌ Error in fetchAllClasses:', error);
+            // Try to get from localStorage cache
+            const cached = localStorage.getItem('cached_classes');
+            if (cached) {
+                try {
+                    const classes = JSON.parse(cached);
+                    if (classes && classes.length > 0) {
+                        console.log('📋 Using cached classes from localStorage:', classes);
+                        return classes;
+                    }
+                } catch (e) {}
+            }
             return this.getDefaultClasses();
         }
     },
 
+    /**
+     * Fetch classes from users table as fallback
+     */
+    async fetchClassesFromUsers() {
+        try {
+            console.log('📋 [Supabase] Fetching classes from users table...');
+            const { data, error } = await this.supabase
+                .from(this.tables.users)
+                .select('class')
+                .eq('role', 'student')
+                .not('class', 'is', null);
+
+            if (error) {
+                console.error('❌ Error fetching classes from users:', error);
+                return this.getDefaultClasses();
+            }
+
+            if (!data || data.length === 0) {
+                console.log('⚠️ No classes found in users table');
+                return this.getDefaultClasses();
+            }
+
+            const classes = [...new Set(data.map(s => s.class).filter(Boolean))];
+            console.log(`✅ Found ${classes.length} classes from users table:`, classes);
+
+            // Cache the result
+            if (classes.length > 0) {
+                localStorage.setItem('cached_classes', JSON.stringify(classes));
+            }
+
+            return classes.sort();
+        } catch (error) {
+            console.error('❌ Error in fetchClassesFromUsers:', error);
+            return this.getDefaultClasses();
+        }
+    },
+
+    /**
+     * Default classes - only used when no data in database
+     */
     getDefaultClasses() {
-        // Complete list of default classes
         const defaultClasses = [
             '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
             '8A', '8B', '8C', '8D', '8E', '8F', '8G',
@@ -753,7 +811,7 @@ const SupabaseConfig = {
             '11A', '11B', '11C', '11D', '11E', '11F', '11G',
             '12A', '12B', '12C', '12D', '12E', '12F'
         ];
-        console.log('⚠️ Using default classes list:', defaultClasses);
+        console.log('⚠️ Using default classes (no data in database):', defaultClasses);
         return defaultClasses;
     },
 
